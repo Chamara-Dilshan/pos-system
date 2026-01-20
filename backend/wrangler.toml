@@ -1,0 +1,20 @@
+name = "cloudpos-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# D1 Database binding
+# After creating database with: npx wrangler d1 create pos-db
+# Paste the database_id below (it will look like: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+[[d1_databases]]
+binding = "DB"
+database_name = "pos-db"
+database_id = "d94f03ad-0dbd-40f0-ad81-cf886e7f2e0c"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+# R2 Storage binding (for product images)
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "cloudpos-images"

@@ -1,0 +1,27 @@
+{
+  "name": "cloudpos-backend",
+  "version": "1.0.0",
+  "description": "CloudPOS Serverless API",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create pos-db",
+    "db:migrate": "wrangler d1 execute pos-db --local --file=schema.sql",
+    "db:migrate:prod": "wrangler d1 execute pos-db --file=schema.sql"
+  },
+  "keywords": [
+    "pos",
+    "cloudflare",
+    "workers"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "hono": "^4.11.4"
+  },
+  "devDependencies": {
+    "wrangler": "^4.59.2"
+  }
+}
