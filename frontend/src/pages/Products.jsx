@@ -3,7 +3,7 @@
 // ============================================================================
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit, Trash2, Package, Filter } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, Filter, Box } from 'lucide-react';
 import api from '../services/api';
 import { useSettings } from '../context/SettingsContext';
 import Button from '../components/common/Button';
@@ -19,6 +19,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [stockFilter, setStockFilter] = useState('all'); // all, inStock, lowStock, outOfStock
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
@@ -64,8 +65,25 @@ const Products = () => {
       selectedCategory === '' ||
       product.category_id === parseInt(selectedCategory);
 
-    return matchesSearch && matchesCategory;
+    // Stock filter logic
+    let matchesStock = true;
+    if (stockFilter === 'inStock') {
+      matchesStock = product.stock > product.min_stock;
+    } else if (stockFilter === 'lowStock') {
+      matchesStock = product.stock > 0 && product.stock <= product.min_stock;
+    } else if (stockFilter === 'outOfStock') {
+      matchesStock = product.stock === 0;
+    }
+
+    return matchesSearch && matchesCategory && matchesStock;
   });
+
+  // Get stock status for a product
+  const getStockStatus = (product) => {
+    if (product.stock === 0) return 'outOfStock';
+    if (product.stock <= product.min_stock) return 'lowStock';
+    return 'inStock';
+  };
 
   if (loading) {
     return <Loading message="Loading products..." />;
@@ -123,7 +141,7 @@ const Products = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className={`pl-10 pr-8 py-3 ${inputColors.base} ${inputColors.focus} rounded-xl transition-all min-w-[200px] appearance-none cursor-pointer`}
+              className={`pl-10 pr-8 py-3 ${inputColors.base} ${inputColors.focus} rounded-xl transition-all min-w-[180px] appearance-none cursor-pointer`}
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -131,6 +149,22 @@ const Products = () => {
                   {cat.name}
                 </option>
               ))}
+            </select>
+          </div>
+          <div className="relative">
+            <Box
+              className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${tokens.text.muted}`}
+              size={18}
+            />
+            <select
+              value={stockFilter}
+              onChange={(e) => setStockFilter(e.target.value)}
+              className={`pl-10 pr-8 py-3 ${inputColors.base} ${inputColors.focus} rounded-xl transition-all min-w-[160px] appearance-none cursor-pointer`}
+            >
+              <option value="all">All Stock</option>
+              <option value="inStock">In Stock</option>
+              <option value="lowStock">Low Stock</option>
+              <option value="outOfStock">Out of Stock</option>
             </select>
           </div>
         </div>
@@ -165,7 +199,7 @@ const Products = () => {
               <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
                 {product.image_url ? (
                   <img
-                    src={product.image_url}
+                    src={api.getImageUrl(product.image_url)}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -194,7 +228,7 @@ const Products = () => {
                     {settings.currency_symbol}{product.price.toFixed(2)}
                   </span>
                   <StatusBadge
-                    status={product.stock <= product.min_stock ? 'lowStock' : 'inStock'}
+                    status={getStockStatus(product)}
                     size="sm"
                   />
                 </div>

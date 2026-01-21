@@ -1,8 +1,8 @@
 // ============================================================================
 // Cart Component - CloudPOS
 // ============================================================================
-import { useState } from 'react';
-import { ShoppingCart, Trash2, Plus, Minus, Percent, DollarSign, ShoppingBag } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Trash2, Plus, Minus, Percent, DollarSign, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useSettings } from '../../context/SettingsContext';
 import Button from '../common/Button';
@@ -13,10 +13,12 @@ const Cart = () => {
   const {
     items,
     discount,
+    stockError,
     setDiscount,
     removeItem,
     updateQuantity,
     clearCart,
+    clearStockError,
     calculateSubtotal,
     calculateDiscount,
     calculateTax,
@@ -91,6 +93,20 @@ const Cart = () => {
           </p>
         </div>
 
+        {/* ── Stock Error Alert ──────────────────────────────────────────────── */}
+        {stockError && (
+          <div className={`mx-4 mt-4 ${alertColors.warning.full} px-3 py-2.5 rounded-xl text-sm flex items-center gap-2`}>
+            <AlertTriangle size={16} />
+            <span className="flex-1">{stockError.message}</span>
+            <button
+              onClick={clearStockError}
+              className="hover:opacity-70 font-bold"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* ── Cart Items ─────────────────────────────────────────────────────── */}
         <div className="flex-1 overflow-auto p-4">
           {items.length === 0 ? (
@@ -149,6 +165,11 @@ const Cart = () => {
                       <div className={`font-bold ${tokens.text.primary}`}>
                         {currencySymbol}{(item.price * item.quantity).toFixed(2)}
                       </div>
+                      {item.quantity >= item.stock && (
+                        <div className="text-xs text-amber-600 font-medium mt-0.5">
+                          Max stock reached
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

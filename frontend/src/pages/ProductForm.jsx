@@ -12,6 +12,9 @@ import {
   Image,
   AlertTriangle,
   Save,
+  Upload,
+  X,
+  Loader2,
 } from 'lucide-react';
 import api from '../services/api';
 import Button from '../components/common/Button';
@@ -28,7 +31,9 @@ const ProductForm = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -73,11 +78,65 @@ const ProductForm = () => {
         min_stock: product.min_stock || '5',
         image_url: product.image_url || '',
       });
+      // Set image preview for existing product
+      if (product.image_url) {
+        setImagePreview(api.getImageUrl(product.image_url));
+      }
     } catch (err) {
       setError('Failed to load product');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload JPEG, PNG, GIF, or WebP images.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File too large. Maximum size is 5MB.');
+      return;
+    }
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setUploading(true);
+    setError('');
+
+    try {
+      const response = await api.uploadImage(file);
+      setFormData((prev) => ({
+        ...prev,
+        image_url: response.image_url,
+      }));
+    } catch (err) {
+      setError(err.message || 'Failed to upload image');
+      setImagePreview(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      image_url: '',
+    }));
+    setImagePreview(null);
   };
 
   const handleChange = (e) => {
@@ -206,16 +265,71 @@ const ProductForm = () => {
               helperText="Stock Keeping Unit - unique product identifier"
             />
 
-            <Input
-              label="Image URL (Optional)"
-              type="url"
-              name="image_url"
-              value={formData.image_url}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              icon={Image}
-              helperText="Direct link to product image"
-            />
+            {/* Image Upload */}
+            <div>
+              <label className={`block text-sm font-medium ${tokens.text.secondary} mb-2`}>
+                Product Image (Optional)
+              </label>
+
+              {imagePreview || formData.image_url ? (
+                <div className="relative w-48 aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
+                  <img
+                    src={imagePreview || api.getImageUrl(formData.image_url)}
+                    alt="Product preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <Loader2 size={32} className="text-white animate-spin" />
+                    </div>
+                  )}
+                  {!uploading && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <label
+                  className={`flex flex-col items-center justify-center w-48 aspect-square border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                    uploading
+                      ? 'border-gray-300 bg-gray-50'
+                      : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                  }`}
+                >
+                  {uploading ? (
+                    <div className="flex flex-col items-center">
+                      <Loader2 size={32} className="text-blue-500 animate-spin mb-2" />
+                      <span className={`text-sm ${tokens.text.muted}`}>Uploading...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <Upload size={32} className="text-gray-400 mb-2" />
+                      <span className={`text-sm font-medium ${tokens.text.secondary}`}>
+                        Click to upload image
+                      </span>
+                      <span className={`text-xs ${tokens.text.muted} mt-1`}>
+                        JPEG, PNG, GIF, WebP (max 5MB)
+                      </span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
           {/* ── Right Column ─────────────────────────────────────────────────── */}
@@ -290,25 +404,6 @@ const ProductForm = () => {
             )}
           </div>
         </div>
-
-        {/* ── Image Preview ────────────────────────────────────────────────── */}
-        {formData.image_url && (
-          <div className={`mt-6 pt-6 border-t ${tokens.border.default}`}>
-            <h3 className={`text-sm font-semibold uppercase tracking-wider ${tokens.text.muted} mb-4`}>
-              Image Preview
-            </h3>
-            <div className="w-40 h-40 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
-              <img
-                src={formData.image_url}
-                alt="Product preview"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* ── Action Buttons ───────────────────────────────────────────────── */}
         <div className={`flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t ${tokens.border.default}`}>

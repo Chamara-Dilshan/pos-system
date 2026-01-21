@@ -156,34 +156,56 @@ const Reports = () => {
         {dailySales.length === 0 ? (
           <p className={`${tokens.text.muted} text-center py-8`}>No sales data available</p>
         ) : (
-          <div className="space-y-4">
-            {dailySales.map((day) => (
-              <div key={day.date} className="flex items-center gap-4">
-                <div className={`w-28 text-sm font-medium ${tokens.text.secondary}`}>
-                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
-                      <div
-                        className="absolute inset-y-0 left-0 rounded-full flex items-center justify-end pr-3 transition-all duration-500"
-                        style={{
-                          width: `${Math.max(Math.min((day.daily_sales / (summary?.total_sales || 1)) * 100, 100), 10)}%`,
-                          background: `linear-gradient(to right, ${colorScheme.primary[500]}, ${colorScheme.primary[600]})`,
-                        }}
-                      >
-                        <span className="text-white text-xs font-semibold whitespace-nowrap">
-                          {settings.currency_symbol}{day.daily_sales?.toFixed(2)}
-                        </span>
+          <div className="space-y-3">
+            {dailySales.map((day, index) => {
+              const maxSales = Math.max(...dailySales.map(d => d.daily_sales || 0));
+              const percentage = maxSales > 0 ? ((day.daily_sales || 0) / maxSales) * 100 : 0;
+              const isToday = new Date(day.date).toDateString() === new Date().toDateString();
+
+              return (
+                <div
+                  key={day.date}
+                  className={`flex items-center gap-4 p-3 rounded-xl transition-all ${
+                    isToday ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50 border border-gray-100'
+                  }`}
+                >
+                  <div className="w-20">
+                    <div className={`text-sm font-semibold ${isToday ? 'text-blue-600' : tokens.text.primary}`}>
+                      {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                    </div>
+                    <div className={`text-xs ${tokens.text.muted}`}>
+                      {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${Math.max(percentage, 3)}%`,
+                            background: isToday
+                              ? `linear-gradient(to right, ${colorScheme.primary[400]}, ${colorScheme.primary[600]})`
+                              : `linear-gradient(to right, ${colorScheme.success[400]}, ${colorScheme.success[500]})`,
+                          }}
+                        />
                       </div>
                     </div>
-                    <div className={`text-sm ${tokens.text.muted} w-20 text-right`}>
-                      {day.completed_count} orders
+                  </div>
+                  <div className="text-right min-w-[120px]">
+                    <div
+                      className="font-bold"
+                      style={{ color: isToday ? colorScheme.primary[600] : colorScheme.success[600] }}
+                    >
+                      {settings.currency_symbol}{(day.daily_sales || 0).toFixed(2)}
+                    </div>
+                    <div className={`text-xs ${tokens.text.muted}`}>
+                      {day.completed_count || 0} order{(day.completed_count || 0) !== 1 ? 's' : ''}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </SectionCard>

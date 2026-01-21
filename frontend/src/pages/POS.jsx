@@ -174,7 +174,7 @@ const POS = () => {
                     <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden">
                       {product.image_url ? (
                         <img
-                          src={product.image_url}
+                          src={api.getImageUrl(product.image_url)}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
@@ -220,7 +220,7 @@ const POS = () => {
                     <div className="w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                       {product.image_url ? (
                         <img
-                          src={product.image_url}
+                          src={api.getImageUrl(product.image_url)}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />

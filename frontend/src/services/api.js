@@ -243,6 +243,52 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // Upload endpoints
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const url = `${this.baseURL}/api/upload/image`;
+    const headers = {};
+
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload image');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Upload Error:', error);
+      throw error;
+    }
+  }
+
+  async deleteImage(filename) {
+    return this.request('/api/upload/image', {
+      method: 'DELETE',
+      body: JSON.stringify({ filename }),
+    });
+  }
+
+  getImageUrl(path) {
+    if (!path) return null;
+    // If it's already a full URL, return as-is
+    if (path.startsWith('http')) return path;
+    // Otherwise, prepend the API URL
+    return `${this.baseURL}${path}`;
+  }
 }
 
 const api = new ApiService();

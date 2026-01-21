@@ -13,17 +13,43 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState([]);
   const [discount, setDiscount] = useState({ type: 'none', value: 0 });
+  const [stockError, setStockError] = useState(null);
+
+  const clearStockError = () => setStockError(null);
 
   const addItem = (product) => {
+    setStockError(null);
+
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
 
       if (existingItem) {
+        // Check if adding one more would exceed stock
+        if (existingItem.quantity + 1 > product.stock) {
+          setStockError({
+            productId: product.id,
+            productName: product.name,
+            availableStock: product.stock,
+            message: `Only ${product.stock} items available for "${product.name}"`,
+          });
+          return prevItems; // Don't update
+        }
         return prevItems.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
+      }
+
+      // New item - check if stock is available
+      if (product.stock < 1) {
+        setStockError({
+          productId: product.id,
+          productName: product.name,
+          availableStock: product.stock,
+          message: `"${product.name}" is out of stock`,
+        });
+        return prevItems;
       }
 
       return [...prevItems, { ...product, quantity: 1 }];
@@ -35,16 +61,30 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = (productId, quantity) => {
+    setStockError(null);
+
     if (quantity <= 0) {
       removeItem(productId);
       return;
     }
 
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
-    );
+    setItems((prevItems) => {
+      const item = prevItems.find((i) => i.id === productId);
+
+      if (item && quantity > item.stock) {
+        setStockError({
+          productId: item.id,
+          productName: item.name,
+          availableStock: item.stock,
+          message: `Only ${item.stock} items available for "${item.name}"`,
+        });
+        return prevItems; // Don't update
+      }
+
+      return prevItems.map((i) =>
+        i.id === productId ? { ...i, quantity } : i
+      );
+    });
   };
 
   const clearCart = () => {
@@ -89,11 +129,13 @@ export const CartProvider = ({ children }) => {
   const value = {
     items,
     discount,
+    stockError,
     setDiscount,
     addItem,
     removeItem,
     updateQuantity,
     clearCart,
+    clearStockError,
     calculateSubtotal,
     calculateDiscount,
     calculateTax,
