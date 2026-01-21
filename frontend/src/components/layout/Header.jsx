@@ -6,11 +6,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { tokens, colorScheme } from '../../config/colors';
-import Button from '../common/Button';
 import { RoleBadge } from '../common/Badge';
 
 const Header = ({ onMenuClick }) => {
-  const { userData, logout } = useAuth();
+  const { userData, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -121,19 +120,21 @@ const Header = ({ onMenuClick }) => {
                   </div>
                 </div>
 
-                {/* Menu Items */}
-                <div className="py-2">
-                  <button
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      navigate('/settings');
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2 text-left ${tokens.text.primary} hover:bg-gray-50 transition-colors`}
-                  >
-                    <User size={18} className={tokens.text.muted} />
-                    <span>Account Settings</span>
-                  </button>
-                </div>
+                {/* Menu Items - Only show Settings for admins */}
+                {isAdmin() && (
+                  <div className="py-2">
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate('/settings');
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2 text-left ${tokens.text.primary} hover:bg-gray-50 transition-colors`}
+                    >
+                      <User size={18} className={tokens.text.muted} />
+                      <span>Account Settings</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Logout */}
                 <div className="border-t border-gray-100 pt-2">
