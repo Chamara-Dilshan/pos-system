@@ -8,6 +8,7 @@ import orders from './routes/orders.js';
 import users from './routes/users.js';
 import reports from './routes/reports.js';
 import settings from './routes/settings.js';
+import payments from './routes/payments.js';
 import { authMiddleware, adminMiddleware } from './middleware/auth.js';
 
 const app = new Hono();
@@ -38,6 +39,7 @@ app.route('/api/users', users);
 
 app.route('/api/reports', reports);
 app.route('/api/settings', settings);
+app.route('/api/payments', payments);
 
 // 404 handler
 app.notFound((c) => {

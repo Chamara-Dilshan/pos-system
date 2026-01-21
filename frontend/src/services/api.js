@@ -146,6 +146,18 @@ class ApiService {
     });
   }
 
+  // Payment endpoints (Stripe)
+  async createPaymentIntent(amount, currency = 'usd', metadata = {}) {
+    return this.request('/api/payments/create-intent', {
+      method: 'POST',
+      body: JSON.stringify({ amount, currency, metadata }),
+    });
+  }
+
+  async verifyPayment(paymentIntentId) {
+    return this.request(`/api/payments/verify/${paymentIntentId}`);
+  }
+
   // Users endpoints (Admin only)
   async getUsers() {
     return this.request('/api/users');

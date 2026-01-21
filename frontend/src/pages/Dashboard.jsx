@@ -13,6 +13,7 @@ import {
   Store,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import api from '../services/api';
 import Loading from '../components/common/Loading';
 import Card, { StatsCard, SectionCard } from '../components/common/Card';
@@ -21,6 +22,7 @@ import { tokens, iconWithBg, alertColors, gradientColors, colorScheme } from '..
 
 const Dashboard = () => {
   const { userData } = useAuth();
+  const { settings } = useSettings();
   const [stats, setStats] = useState(null);
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +84,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Today's Sales"
-          value={`$${stats?.todaysSales?.toFixed(2) || '0.00'}`}
+          value={`${settings.currency_symbol}${stats?.todaysSales?.toFixed(2) || '0.00'}`}
           subtitle={stats?.todaysSales > 0 ? 'Great job!' : 'No sales yet today'}
           icon={DollarSign}
           iconColor="success"
@@ -238,7 +240,7 @@ const Dashboard = () => {
           </div>
           <div>
             <h2 className={`text-xl font-bold ${tokens.text.primary} mb-2`}>
-              Welcome to CloudPOS
+              Welcome to {settings.store_name || 'CloudPOS'}
             </h2>
             <p className={tokens.text.secondary}>
               Hello, <span className="font-semibold">{userData?.name}</span>! You're logged in as a{' '}

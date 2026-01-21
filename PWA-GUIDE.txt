@@ -1,0 +1,202 @@
+================================================================================
+                        CloudPOS - PWA Testing Guide
+================================================================================
+
+PWA (Progressive Web App) allows CloudPOS to be installed on devices and
+work offline like a native application.
+
+================================================================================
+                          1. INSTALL AS APP
+================================================================================
+
+CHROME DESKTOP:
+---------------
+1. Run the app: cd frontend && npm run dev
+2. Open Chrome browser and go to http://localhost:5173
+3. Look for the install icon (+) in the address bar, OR
+4. Click the 3-dot menu (top right) -> "Install CloudPOS..."
+5. Click "Install" in the popup
+6. The app will open in its own window like a native application
+7. Find CloudPOS in your Start Menu / Applications
+
+MICROSOFT EDGE:
+---------------
+1. Open the app URL in Edge
+2. Click the 3-dot menu -> Apps -> "Install CloudPOS"
+3. The app appears in your taskbar and Start Menu
+
+ANDROID (Chrome):
+-----------------
+1. Open your app URL in Chrome mobile
+2. You'll see "Add to Home Screen" banner at bottom, OR
+3. Tap 3-dot menu -> "Add to Home screen"
+4. Tap "Add" to confirm
+5. CloudPOS icon appears on your home screen
+6. Opens in fullscreen like a native app
+
+iOS (Safari):
+-------------
+1. Open your app URL in Safari
+2. Tap the Share button (square with arrow)
+3. Scroll down and tap "Add to Home Screen"
+4. Tap "Add" in the top right
+5. CloudPOS icon appears on your home screen
+
+================================================================================
+                          2. TEST OFFLINE MODE
+================================================================================
+
+METHOD 1 - Using DevTools:
+--------------------------
+1. Open the app in Chrome
+2. Press F12 to open DevTools
+3. Go to "Network" tab
+4. Check the "Offline" checkbox
+5. Refresh the page (F5)
+6. The app should still load from cache
+7. You'll see yellow "You are offline" banner at top
+
+METHOD 2 - Disable Network:
+---------------------------
+1. Turn off your WiFi/Ethernet
+2. Open or refresh CloudPOS
+3. The app loads from cached files
+4. API calls will show offline error
+
+WHAT WORKS OFFLINE:
+-------------------
+- App interface loads completely
+- Previously cached products/categories display
+- Navigation between pages works
+- Static assets (images, CSS, JS) load
+
+WHAT REQUIRES INTERNET:
+-----------------------
+- Creating new orders
+- Fetching fresh product data
+- User authentication
+- Payment processing
+
+================================================================================
+                          3. PWA COMPONENTS IN APP
+================================================================================
+
+INSTALL PROMPT (Bottom right popup):
+------------------------------------
+- Appears when app can be installed
+- Shows "Install CloudPOS" with app icon
+- Click "Install App" to add to device
+- Click "Later" to dismiss (shows again in 7 days)
+- File: frontend/src/components/pwa/InstallPrompt.jsx
+
+OFFLINE INDICATOR (Top banner):
+-------------------------------
+- Yellow banner: "You are offline"
+- Shows when network connection is lost
+- Disappears automatically when back online
+- File: frontend/src/components/pwa/OfflineIndicator.jsx
+
+UPDATE NOTIFICATION (Top banner):
+---------------------------------
+- Blue banner: "A new version is available!"
+- Shows when service worker detects update
+- Click "Update now" to refresh with new version
+- File: frontend/src/components/pwa/OfflineIndicator.jsx
+
+================================================================================
+                          4. PWA FILES STRUCTURE
+================================================================================
+
+frontend/
+├── public/
+│   ├── manifest.json          <- App name, icons, theme colors
+│   ├── sw.js                  <- Service worker (caching logic)
+│   └── icons/
+│       └── icon.svg           <- App icon (used for all sizes)
+│
+├── src/
+│   ├── main.jsx               <- Service worker registration
+│   ├── hooks/
+│   │   └── usePWA.js          <- React hook for PWA state
+│   └── components/
+│       └── pwa/
+│           ├── InstallPrompt.jsx     <- Install app popup
+│           └── OfflineIndicator.jsx  <- Offline/update banners
+│
+└── index.html                 <- PWA meta tags
+
+================================================================================
+                          5. CACHING STRATEGY
+================================================================================
+
+STATIC ASSETS (Cache-First):
+----------------------------
+- HTML, CSS, JavaScript files
+- Images and fonts
+- Served from cache immediately
+- Updated in background when online
+
+API REQUESTS (Network-First):
+-----------------------------
+- /api/products - Cached for offline viewing
+- /api/categories - Cached for offline viewing
+- /api/settings - Cached for offline viewing
+- Other API calls - Network only
+
+================================================================================
+                          6. VERIFY PWA INSTALLATION
+================================================================================
+
+CHROME DEVTOOLS:
+----------------
+1. Open DevTools (F12)
+2. Go to "Application" tab
+3. Check these sections:
+   - Manifest: Shows app info and icons
+   - Service Workers: Shows registered SW
+   - Cache Storage: Shows cached files
+
+LIGHTHOUSE AUDIT:
+-----------------
+1. Open DevTools (F12)
+2. Go to "Lighthouse" tab
+3. Check "Progressive Web App"
+4. Click "Analyze page load"
+5. Review PWA score and recommendations
+
+================================================================================
+                          7. TROUBLESHOOTING
+================================================================================
+
+SERVICE WORKER NOT REGISTERING:
+-------------------------------
+- Must use HTTPS (or localhost for development)
+- Check console for registration errors
+- Clear browser cache and try again
+
+INSTALL BUTTON NOT SHOWING:
+---------------------------
+- App must be served over HTTPS
+- manifest.json must be valid
+- Service worker must be registered
+- App must not already be installed
+
+OFFLINE NOT WORKING:
+--------------------
+- Wait for service worker to cache files (reload once)
+- Check Application -> Cache Storage in DevTools
+- Clear cache and reload to re-cache
+
+================================================================================
+                          8. PRODUCTION DEPLOYMENT
+================================================================================
+
+For PWA to work in production:
+
+1. Deploy to HTTPS domain (required for service workers)
+2. Cloudflare Pages provides HTTPS automatically
+3. Test install flow on production URL
+4. Verify manifest loads: https://your-domain.com/manifest.json
+5. Verify service worker: https://your-domain.com/sw.js
+
+================================================================================

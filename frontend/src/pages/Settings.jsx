@@ -6,16 +6,17 @@ import {
   Settings as SettingsIcon,
   Store,
   DollarSign,
-  Palette,
   Save,
-  RotateCcw,
   CheckCircle,
   Mail,
   Phone,
   MapPin,
   Percent,
+  Pencil,
+  X,
 } from 'lucide-react';
 import api from '../services/api';
+import { useSettings } from '../context/SettingsContext';
 import Loading from '../components/common/Loading';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -24,9 +25,10 @@ import { SectionCard } from '../components/common/Card';
 import { tokens, alertColors, colorScheme } from '../config/colors';
 
 const Settings = () => {
+  const { updateSettings: updateGlobalSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     store_name: '',
     store_email: '',
@@ -35,11 +37,8 @@ const Settings = () => {
     tax_rate: 10,
     currency: 'USD',
     currency_symbol: '$',
-    theme_primary: 'blue',
-    theme_success: 'green',
-    theme_danger: 'red',
-    theme_neutral: 'gray',
   });
+  const [originalData, setOriginalData] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
@@ -50,8 +49,7 @@ const Settings = () => {
     try {
       setLoading(true);
       const response = await api.getSettings();
-      setSettings(response.settings);
-      setFormData({
+      const data = {
         store_name: response.settings.store_name || '',
         store_email: response.settings.store_email || '',
         store_phone: response.settings.store_phone || '',
@@ -59,11 +57,9 @@ const Settings = () => {
         tax_rate: response.settings.tax_rate || 10,
         currency: response.settings.currency || 'USD',
         currency_symbol: response.settings.currency_symbol || '$',
-        theme_primary: response.settings.theme_primary || 'blue',
-        theme_success: response.settings.theme_success || 'green',
-        theme_danger: response.settings.theme_danger || 'red',
-        theme_neutral: response.settings.theme_neutral || 'gray',
-      });
+      };
+      setFormData(data);
+      setOriginalData(data);
     } catch (error) {
       console.error('Failed to fetch settings:', error);
       setMessage({ type: 'error', text: 'Failed to load settings' });
@@ -80,6 +76,17 @@ const Settings = () => {
     }));
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setMessage({ type: '', text: '' });
+  };
+
+  const handleCancel = () => {
+    setFormData(originalData);
+    setIsEditing(false);
+    setMessage({ type: '', text: '' });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -88,31 +95,16 @@ const Settings = () => {
 
       await api.updateSettings(formData);
 
+      // Update global settings context so changes reflect across the app
+      updateGlobalSettings(formData);
+
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
+      setOriginalData(formData);
+      setIsEditing(false);
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-      fetchSettings();
     } catch (error) {
       console.error('Failed to save settings:', error);
       setMessage({ type: 'error', text: 'Failed to save settings' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleReset = async () => {
-    if (!confirm('Are you sure you want to reset all settings to defaults?')) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      await api.resetSettings();
-      setMessage({ type: 'success', text: 'Settings reset to defaults' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-      fetchSettings();
-    } catch (error) {
-      console.error('Failed to reset settings:', error);
-      setMessage({ type: 'error', text: 'Failed to reset settings' });
     } finally {
       setSaving(false);
     }
@@ -122,38 +114,44 @@ const Settings = () => {
     return <Loading message="Loading settings..." />;
   }
 
-  const colorOptions = [
-    { value: 'blue', label: 'Blue', bg: 'bg-blue-500' },
-    { value: 'green', label: 'Green', bg: 'bg-green-500' },
-    { value: 'red', label: 'Red', bg: 'bg-red-500' },
-    { value: 'purple', label: 'Purple', bg: 'bg-purple-500' },
-    { value: 'orange', label: 'Orange', bg: 'bg-orange-500' },
-    { value: 'gray', label: 'Gray', bg: 'bg-gray-500' },
-  ];
-
   const currencyOptions = [
+    { value: 'LKR', label: 'LKR - Sri Lankan Rupee' },
     { value: 'USD', label: 'USD - US Dollar' },
     { value: 'EUR', label: 'EUR - Euro' },
     { value: 'GBP', label: 'GBP - British Pound' },
     { value: 'JPY', label: 'JPY - Japanese Yen' },
     { value: 'CAD', label: 'CAD - Canadian Dollar' },
     { value: 'AUD', label: 'AUD - Australian Dollar' },
+    { value: 'INR', label: 'INR - Indian Rupee' },
   ];
 
   return (
     <div className="space-y-6">
       {/* ── Page Header ────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-4">
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center text-white"
-          style={{ backgroundColor: colorScheme.primary[600] }}
-        >
-          <SettingsIcon size={24} />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-white"
+            style={{ backgroundColor: colorScheme.primary[600] }}
+          >
+            <SettingsIcon size={24} />
+          </div>
+          <div>
+            <h1 className={`text-2xl font-bold ${tokens.text.primary}`}>Settings</h1>
+            <p className={tokens.text.muted}>Manage your store configuration and preferences</p>
+          </div>
         </div>
-        <div>
-          <h1 className={`text-2xl font-bold ${tokens.text.primary}`}>Settings</h1>
-          <p className={tokens.text.muted}>Manage your store configuration and preferences</p>
-        </div>
+        {!isEditing && (
+          <Button
+            type="button"
+            onClick={handleEdit}
+            variant="primary"
+            size="lg"
+            icon={Pencil}
+          >
+            Edit Settings
+          </Button>
+        )}
       </div>
 
       {/* ── Success/Error Messages ─────────────────────────────────────────── */}
@@ -186,6 +184,7 @@ const Settings = () => {
               placeholder="My Store"
               icon={Store}
               required
+              disabled={!isEditing}
             />
 
             <Input
@@ -196,6 +195,7 @@ const Settings = () => {
               onChange={handleChange}
               placeholder="store@example.com"
               icon={Mail}
+              disabled={!isEditing}
             />
 
             <Input
@@ -206,6 +206,7 @@ const Settings = () => {
               onChange={handleChange}
               placeholder="+1 (555) 123-4567"
               icon={Phone}
+              disabled={!isEditing}
             />
 
             <Input
@@ -216,6 +217,7 @@ const Settings = () => {
               onChange={handleChange}
               placeholder="123 Main St, City, State 12345"
               icon={MapPin}
+              disabled={!isEditing}
             />
           </div>
         </SectionCard>
@@ -235,6 +237,7 @@ const Settings = () => {
               icon={Percent}
               helperText="Default tax rate for all transactions"
               required
+              disabled={!isEditing}
             />
 
             <Select
@@ -244,6 +247,7 @@ const Settings = () => {
               onChange={handleChange}
               options={currencyOptions}
               icon={DollarSign}
+              disabled={!isEditing}
             />
 
             <Input
@@ -255,123 +259,35 @@ const Settings = () => {
               maxLength="3"
               placeholder="$"
               icon={DollarSign}
+              disabled={!isEditing}
             />
           </div>
         </SectionCard>
 
-        {/* ── Color Theme ──────────────────────────────────────────────────── */}
-        <SectionCard title="Color Theme" icon={Palette}>
-          <div className="space-y-6">
-            {/* Primary Color */}
-            <div>
-              <label className={`block text-sm font-semibold ${tokens.text.secondary} mb-3`}>
-                Primary Color (Main actions, links)
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                {colorOptions.map((color) => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, theme_primary: color.value })}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      formData.theme_primary === color.value
-                        ? 'border-gray-900 ring-2 ring-blue-500 ring-offset-2'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`w-full h-10 ${color.bg} rounded-lg mb-2`}></div>
-                    <p className={`text-xs font-medium text-center ${tokens.text.secondary}`}>
-                      {color.label}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Success Color */}
-            <div>
-              <label className={`block text-sm font-semibold ${tokens.text.secondary} mb-3`}>
-                Success Color (Confirmations, positive actions)
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                {colorOptions.map((color) => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, theme_success: color.value })}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      formData.theme_success === color.value
-                        ? 'border-gray-900 ring-2 ring-green-500 ring-offset-2'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`w-full h-10 ${color.bg} rounded-lg mb-2`}></div>
-                    <p className={`text-xs font-medium text-center ${tokens.text.secondary}`}>
-                      {color.label}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Danger Color */}
-            <div>
-              <label className={`block text-sm font-semibold ${tokens.text.secondary} mb-3`}>
-                Danger Color (Errors, deletions, alerts)
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                {colorOptions.map((color) => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, theme_danger: color.value })}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      formData.theme_danger === color.value
-                        ? 'border-gray-900 ring-2 ring-red-500 ring-offset-2'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`w-full h-10 ${color.bg} rounded-lg mb-2`}></div>
-                    <p className={`text-xs font-medium text-center ${tokens.text.secondary}`}>
-                      {color.label}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Info Note */}
-            <div className={`${alertColors.info.bg} border ${alertColors.info.border} rounded-xl p-4`}>
-              <p className={`text-sm ${alertColors.info.text}`}>
-                <strong>Note:</strong> Color changes will be applied after saving and refreshing the page.
-                The system uses a centralized color scheme with black, white, blue, green, and red as the primary colors.
-              </p>
-            </div>
+        {/* ── Action Buttons (only show when editing) ────────────────────────── */}
+        {isEditing && (
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              variant="secondary"
+              size="lg"
+              disabled={saving}
+              icon={X}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              loading={saving}
+              icon={Save}
+            >
+              Save Settings
+            </Button>
           </div>
-        </SectionCard>
-
-        {/* ── Action Buttons ───────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-end">
-          <Button
-            type="button"
-            onClick={handleReset}
-            variant="secondary"
-            size="lg"
-            disabled={saving}
-            icon={RotateCcw}
-          >
-            Reset to Defaults
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            loading={saving}
-            icon={Save}
-          >
-            Save Settings
-          </Button>
-        </div>
+        )}
       </form>
     </div>
   );

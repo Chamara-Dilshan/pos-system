@@ -1,18 +1,24 @@
 // ============================================================================
 // Payment Modal Component - CloudPOS
+// Handles both cash and card (Stripe) payments
 // ============================================================================
-import { useState } from 'react';
-import { DollarSign, CreditCard, CheckCircle, X, Printer, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Elements } from '@stripe/react-stripe-js';
+import { DollarSign, CreditCard, CheckCircle, X, Printer, Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import api from '../../services/api';
+import { getStripe, isStripeConfigured } from '../../services/stripe';
 import Button from '../common/Button';
 import Receipt from './Receipt';
+import CardPaymentForm from './CardPaymentForm';
 import { tokens, alertColors, colorScheme } from '../../config/colors';
 
 const PaymentModal = ({ onClose, onSuccess }) => {
   const { items, discount, calculateSubtotal, calculateDiscount, calculateTax, calculateTotal } = useCart();
   const { userData } = useAuth();
+  const { settings } = useSettings();
 
   const [paymentType, setPaymentType] = useState('cash');
   const [cashReceived, setCashReceived] = useState('');
@@ -20,7 +26,16 @@ const PaymentModal = ({ onClose, onSuccess }) => {
   const [error, setError] = useState('');
   const [completedOrder, setCompletedOrder] = useState(null);
 
-  const taxRate = 10;
+  // Stripe-specific state
+  const [clientSecret, setClientSecret] = useState(null);
+  const [paymentIntentId, setPaymentIntentId] = useState(null);
+  const [loadingIntent, setLoadingIntent] = useState(false);
+
+  // Get tax rate and currency from global settings
+  const taxRate = settings.tax_rate || 10;
+  const currencySymbol = settings.currency_symbol || '$';
+
+  // Calculations
   const subtotal = calculateSubtotal();
   const discountAmount = calculateDiscount();
   const tax = calculateTax(taxRate);
@@ -35,15 +50,70 @@ const PaymentModal = ({ onClose, onSuccess }) => {
     Math.ceil(total / 50) * 50,
   ].filter((v, i, a) => a.indexOf(v) === i && v >= total).slice(0, 4);
 
-  const handlePayment = async () => {
+  // Create Payment Intent when card payment is selected
+  useEffect(() => {
+    if (paymentType === 'card' && !clientSecret && isStripeConfigured() && total > 0) {
+      createPaymentIntent();
+    }
+  }, [paymentType]);
+
+  const createPaymentIntent = async () => {
+    setLoadingIntent(true);
+    setError('');
+    try {
+      const response = await api.createPaymentIntent(total, 'usd', {
+        itemsCount: items.length,
+        userId: userData?.id,
+      });
+      setClientSecret(response.clientSecret);
+      setPaymentIntentId(response.paymentIntentId);
+    } catch (err) {
+      setError('Failed to initialize card payment. Please try again or use cash.');
+      console.error('Payment intent error:', err);
+    } finally {
+      setLoadingIntent(false);
+    }
+  };
+
+  // Handle successful card payment from Stripe
+  const handleCardPaymentSuccess = async (stripePaymentIntentId) => {
+    try {
+      const orderData = {
+        user_id: userData.id,
+        items: items.map((item) => ({
+          product_id: item.id,
+          product_name: item.name,
+          quantity: item.quantity,
+          unit_price: item.price,
+          total_price: item.price * item.quantity,
+        })),
+        subtotal,
+        discount_type: discount.type,
+        discount_value: discount.value,
+        tax,
+        total,
+        payment_type: 'card',
+        payment_status: 'paid',
+        status: 'completed',
+        stripe_payment_intent_id: stripePaymentIntentId,
+      };
+
+      const response = await api.createOrder(orderData);
+      setCompletedOrder(response.order);
+    } catch (err) {
+      setError('Payment successful but failed to create order. Please contact support with your payment confirmation.');
+      setProcessing(false);
+    }
+  };
+
+  // Handle cash payment
+  const handleCashPayment = async () => {
     setError('');
 
-    if (paymentType === 'cash') {
-      const received = parseFloat(cashReceived);
-      if (!received || received < total) {
-        setError('Cash received must be at least the total amount');
-        return;
-      }
+    const received = parseFloat(cashReceived);
+    if (!received || received < total) {
+      setError('Cash received must be at least the total amount');
+      return;
     }
 
     setProcessing(true);
@@ -63,7 +133,7 @@ const PaymentModal = ({ onClose, onSuccess }) => {
         discount_value: discount.value,
         tax,
         total,
-        payment_type: paymentType,
+        payment_type: 'cash',
         payment_status: 'paid',
         status: 'completed',
       };
@@ -79,6 +149,16 @@ const PaymentModal = ({ onClose, onSuccess }) => {
 
   const handlePrintReceipt = () => {
     window.print();
+  };
+
+  // Reset card payment state when switching to cash
+  const handlePaymentTypeChange = (type) => {
+    setPaymentType(type);
+    setError('');
+    if (type === 'cash') {
+      setClientSecret(null);
+      setPaymentIntentId(null);
+    }
   };
 
   // ── Success State ─────────────────────────────────────────────────────────
@@ -135,13 +215,14 @@ const PaymentModal = ({ onClose, onSuccess }) => {
   // ── Payment Form ──────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-auto">
         {/* Header */}
-        <div className={`flex items-center justify-between p-5 border-b ${tokens.border.default}`}>
+        <div className={`flex items-center justify-between p-5 border-b ${tokens.border.default} sticky top-0 bg-white rounded-t-2xl`}>
           <h2 className={`text-xl font-bold ${tokens.text.primary}`}>Complete Payment</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            disabled={processing}
           >
             <X size={20} className={tokens.text.muted} />
           </button>
@@ -151,10 +232,8 @@ const PaymentModal = ({ onClose, onSuccess }) => {
           {/* Error */}
           {error && (
             <div className={`${alertColors.error.full} px-4 py-3 rounded-xl mb-4 flex items-center gap-2`}>
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              {error}
+              <AlertCircle size={18} />
+              <span className="text-sm">{error}</span>
             </div>
           )}
 
@@ -162,21 +241,21 @@ const PaymentModal = ({ onClose, onSuccess }) => {
           <div className="bg-gray-50 rounded-xl p-4 mb-5">
             <div className={`flex justify-between ${tokens.text.secondary} mb-2`}>
               <span>Subtotal:</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{currencySymbol}{subtotal.toFixed(2)}</span>
             </div>
             {discountAmount > 0 && (
               <div className="flex justify-between text-green-600 mb-2">
                 <span>Discount:</span>
-                <span>-${discountAmount.toFixed(2)}</span>
+                <span>-{currencySymbol}{discountAmount.toFixed(2)}</span>
               </div>
             )}
             <div className={`flex justify-between ${tokens.text.secondary} mb-2`}>
               <span>Tax ({taxRate}%):</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>{currencySymbol}{tax.toFixed(2)}</span>
             </div>
             <div className={`flex justify-between text-xl font-bold ${tokens.text.primary} pt-3 border-t border-gray-200`}>
               <span>Total:</span>
-              <span style={{ color: colorScheme.primary[600] }}>${total.toFixed(2)}</span>
+              <span style={{ color: colorScheme.primary[600] }}>{currencySymbol}{total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -187,23 +266,25 @@ const PaymentModal = ({ onClose, onSuccess }) => {
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setPaymentType('cash')}
+                onClick={() => handlePaymentTypeChange('cash')}
+                disabled={processing}
                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
                   paymentType === 'cash'
                     ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-sm'
                     : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                }`}
+                } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <DollarSign size={28} />
                 <span className="font-semibold">Cash</span>
               </button>
               <button
-                onClick={() => setPaymentType('card')}
+                onClick={() => handlePaymentTypeChange('card')}
+                disabled={processing}
                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
                   paymentType === 'card'
                     ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-sm'
                     : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                }`}
+                } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <CreditCard size={28} />
                 <span className="font-semibold">Card</span>
@@ -223,7 +304,8 @@ const PaymentModal = ({ onClose, onSuccess }) => {
                 value={cashReceived}
                 onChange={(e) => setCashReceived(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-4 py-3 text-xl font-semibold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={processing}
+                className="w-full px-4 py-3 text-xl font-semibold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
               />
 
               {/* Quick Cash Buttons */}
@@ -232,9 +314,10 @@ const PaymentModal = ({ onClose, onSuccess }) => {
                   <button
                     key={amount}
                     onClick={() => setCashReceived(amount.toString())}
-                    className="flex-1 py-2 px-3 text-sm font-medium bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    disabled={processing}
+                    className="flex-1 py-2 px-3 text-sm font-medium bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
                   >
-                    ${amount}
+                    {currencySymbol}{amount}
                   </button>
                 ))}
               </div>
@@ -244,43 +327,109 @@ const PaymentModal = ({ onClose, onSuccess }) => {
                 <div className={`mt-3 p-4 rounded-xl ${alertColors.success.bg} border ${alertColors.success.border}`}>
                   <div className={`flex justify-between items-center ${alertColors.success.text}`}>
                     <span className="font-medium">Change:</span>
-                    <span className="text-2xl font-bold">${change.toFixed(2)}</span>
+                    <span className="text-2xl font-bold">{currencySymbol}{change.toFixed(2)}</span>
                   </div>
+                </div>
+              )}
+
+              {/* Cash Payment Button */}
+              <div className="flex gap-3 mt-5">
+                <Button
+                  onClick={handleCashPayment}
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  loading={processing}
+                  icon={CheckCircle}
+                >
+                  Complete Payment
+                </Button>
+                <Button
+                  onClick={onClose}
+                  variant="secondary"
+                  size="lg"
+                  disabled={processing}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Card Payment Section */}
+          {paymentType === 'card' && (
+            <div className="mb-5">
+              {!isStripeConfigured() ? (
+                // Stripe not configured
+                <div className={`${alertColors.warning.full} px-4 py-3 rounded-xl`}>
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={18} />
+                    <span className="text-sm font-medium">Card payments not available</span>
+                  </div>
+                  <p className="text-sm mt-1 opacity-80">
+                    Please configure Stripe API keys or use cash payment.
+                  </p>
+                </div>
+              ) : loadingIntent ? (
+                // Loading payment intent
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Loader2 size={32} className="animate-spin text-blue-600 mb-3" />
+                  <p className={`text-sm ${tokens.text.muted}`}>Initializing secure payment...</p>
+                </div>
+              ) : clientSecret ? (
+                // Stripe Elements form
+                <Elements
+                  stripe={getStripe()}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#2563eb',
+                        borderRadius: '12px',
+                      },
+                    },
+                  }}
+                >
+                  <CardPaymentForm
+                    clientSecret={clientSecret}
+                    onSuccess={handleCardPaymentSuccess}
+                    onError={(msg) => setError(msg)}
+                    processing={processing}
+                    setProcessing={setProcessing}
+                  />
+                </Elements>
+              ) : (
+                // Failed to create payment intent
+                <div className={`${alertColors.error.full} px-4 py-3 rounded-xl`}>
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={18} />
+                    <span className="text-sm font-medium">Failed to initialize payment</span>
+                  </div>
+                  <button
+                    onClick={createPaymentIntent}
+                    className="text-sm underline mt-2 hover:no-underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {/* Cancel button for card payment */}
+              {paymentType === 'card' && !processing && (
+                <div className="mt-4">
+                  <Button
+                    onClick={onClose}
+                    variant="secondary"
+                    size="md"
+                    fullWidth
+                  >
+                    Cancel
+                  </Button>
                 </div>
               )}
             </div>
           )}
-
-          {/* Card Payment Info */}
-          {paymentType === 'card' && (
-            <div className={`mb-5 p-4 rounded-xl ${alertColors.info.bg} border ${alertColors.info.border}`}>
-              <p className={`text-sm ${alertColors.info.text}`}>
-                Card payment will be processed through the terminal. Click "Complete Payment" when the transaction is approved.
-              </p>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={handlePayment}
-              variant="primary"
-              size="lg"
-              fullWidth
-              loading={processing}
-              icon={CheckCircle}
-            >
-              Complete Payment
-            </Button>
-            <Button
-              onClick={onClose}
-              variant="secondary"
-              size="lg"
-              disabled={processing}
-            >
-              Cancel
-            </Button>
-          </div>
         </div>
       </div>
     </div>

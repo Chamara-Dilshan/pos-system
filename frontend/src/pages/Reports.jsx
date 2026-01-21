@@ -13,11 +13,13 @@ import {
   Banknote,
 } from 'lucide-react';
 import api from '../services/api';
+import { useSettings } from '../context/SettingsContext';
 import Loading from '../components/common/Loading';
 import { StatsCard, SectionCard } from '../components/common/Card';
 import { tokens, cardColors, alertColors, inputColors, colorScheme, gradientColors } from '../config/colors';
 
 const Reports = () => {
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [summary, setSummary] = useState(null);
@@ -120,14 +122,14 @@ const Reports = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Total Sales"
-            value={`$${summary.total_sales?.toFixed(2) || '0.00'}`}
+            value={`${settings.currency_symbol}${summary.total_sales?.toFixed(2) || '0.00'}`}
             subtitle={`From ${summary.completed_orders || 0} orders`}
             icon={DollarSign}
             iconColor="success"
           />
           <StatsCard
             title="Avg Order Value"
-            value={`$${summary.average_order_value?.toFixed(2) || '0.00'}`}
+            value={`${settings.currency_symbol}${summary.average_order_value?.toFixed(2) || '0.00'}`}
             subtitle="Per completed order"
             icon={TrendingUp}
             iconColor="primary"
@@ -141,7 +143,7 @@ const Reports = () => {
           />
           <StatsCard
             title="Total Tax"
-            value={`$${summary.total_tax?.toFixed(2) || '0.00'}`}
+            value={`${settings.currency_symbol}${summary.total_tax?.toFixed(2) || '0.00'}`}
             subtitle="Collected"
             icon={DollarSign}
             iconColor="warning"
@@ -171,7 +173,7 @@ const Reports = () => {
                         }}
                       >
                         <span className="text-white text-xs font-semibold whitespace-nowrap">
-                          ${day.daily_sales?.toFixed(2)}
+                          {settings.currency_symbol}{day.daily_sales?.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -226,7 +228,7 @@ const Reports = () => {
                       className="font-bold"
                       style={{ color: colorScheme.primary[600] }}
                     >
-                      ${product.total_revenue?.toFixed(2)}
+                      {settings.currency_symbol}{product.total_revenue?.toFixed(2)}
                     </p>
                     <p className={`text-xs ${tokens.text.muted}`}>{product.order_count} orders</p>
                   </div>
@@ -264,7 +266,7 @@ const Reports = () => {
                       className="font-bold"
                       style={{ color: colorScheme.primary[600] }}
                     >
-                      ${cashier.total_sales?.toFixed(2) || '0.00'}
+                      {settings.currency_symbol}{cashier.total_sales?.toFixed(2) || '0.00'}
                     </p>
                     <p className={`text-xs ${tokens.text.muted}`}>{cashier.total_orders || 0} orders</p>
                   </div>
@@ -301,7 +303,7 @@ const Reports = () => {
                       </p>
                     </div>
                     <p className={`text-2xl font-bold ${tokens.text.primary}`}>
-                      ${method.total_amount?.toFixed(2)}
+                      {settings.currency_symbol}{method.total_amount?.toFixed(2)}
                     </p>
                   </div>
                   <div className="text-right">

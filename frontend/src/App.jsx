@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { SettingsProvider } from './context/SettingsContext';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -18,12 +19,19 @@ import Settings from './pages/Settings';
 
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import InstallPrompt from './components/pwa/InstallPrompt';
+import OfflineIndicator from './components/pwa/OfflineIndicator';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <CartProvider>
+        <SettingsProvider>
+          <CartProvider>
+            {/* PWA Components */}
+          <OfflineIndicator />
+          <InstallPrompt />
+
           <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
@@ -155,7 +163,8 @@ function App() {
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
-        </CartProvider>
+          </CartProvider>
+        </SettingsProvider>
       </AuthProvider>
     </Router>
   );

@@ -87,6 +87,7 @@ orders.post('/', authMiddleware, async (c) => {
       payment_status,
       status,
       notes,
+      stripe_payment_intent_id,
     } = await c.req.json();
 
     if (!items || items.length === 0) {
@@ -101,8 +102,8 @@ orders.post('/', authMiddleware, async (c) => {
       INSERT INTO orders (
         user_id, order_number, subtotal, discount_type,
         discount_value, tax, total, payment_type,
-        payment_status, status, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
+        payment_status, status, notes, stripe_payment_intent_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
     `).bind(
       user_id,
       order_number,
@@ -114,7 +115,8 @@ orders.post('/', authMiddleware, async (c) => {
       payment_type || 'cash',
       payment_status || 'paid',
       status || 'completed',
-      notes || null
+      notes || null,
+      stripe_payment_intent_id || null
     ).first();
 
     if (!order) {

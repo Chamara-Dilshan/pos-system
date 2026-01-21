@@ -15,12 +15,14 @@ import {
   Store,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import { tokens, colorScheme } from '../../config/colors';
 import { RoleBadge } from '../common/Badge';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { userData, isAdmin } = useAuth();
+  const { settings } = useSettings();
 
   const isActive = (path) => location.pathname === path;
 
@@ -58,7 +60,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <Store size={22} />
           </div>
           <div>
-            <h1 className="text-xl font-bold">CloudPOS</h1>
+            <h1 className="text-xl font-bold">{settings.store_name || 'CloudPOS'}</h1>
             <p className="text-xs text-gray-400">Point of Sale</p>
           </div>
         </div>

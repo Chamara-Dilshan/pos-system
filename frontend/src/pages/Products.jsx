@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Package, Filter } from 'lucide-react';
 import api from '../services/api';
+import { useSettings } from '../context/SettingsContext';
 import Button from '../components/common/Button';
 import Loading from '../components/common/Loading';
 import { StatusBadge } from '../components/common/Badge';
@@ -12,6 +13,7 @@ import EmptyState from '../components/common/EmptyState';
 import { tokens, cardColors, alertColors, colorScheme, inputColors } from '../config/colors';
 
 const Products = () => {
+  const { settings } = useSettings();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -189,7 +191,7 @@ const Products = () => {
                     className="text-xl font-bold"
                     style={{ color: colorScheme.primary[600] }}
                   >
-                    ${product.price.toFixed(2)}
+                    {settings.currency_symbol}{product.price.toFixed(2)}
                   </span>
                   <StatusBadge
                     status={product.stock <= product.min_stock ? 'lowStock' : 'inStock'}

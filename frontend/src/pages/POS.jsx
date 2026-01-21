@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { Search, Package, Grid, List, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useSettings } from '../context/SettingsContext';
 import Cart from '../components/pos/Cart';
 import Loading from '../components/common/Loading';
 import { tokens, cardColors, alertColors, colorScheme, statusColors } from '../config/colors';
@@ -19,6 +20,7 @@ const POS = () => {
   const [viewMode, setViewMode] = useState('grid');
 
   const { addItem } = useCart();
+  const { settings } = useSettings();
 
   useEffect(() => {
     fetchData();
@@ -187,7 +189,7 @@ const POS = () => {
                     </h3>
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold" style={{ color: colorScheme.primary[600] }}>
-                        ${product.price.toFixed(2)}
+                        {settings.currency_symbol}{product.price.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mt-2">
@@ -251,7 +253,7 @@ const POS = () => {
                     {/* Price */}
                     <div className="text-right">
                       <span className="text-xl font-bold" style={{ color: colorScheme.primary[600] }}>
-                        ${product.price.toFixed(2)}
+                        {settings.currency_symbol}{product.price.toFixed(2)}
                       </span>
                     </div>
 

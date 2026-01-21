@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Cloud shape -->
+  <g transform="translate(80, 120)">
+    <path fill="white" opacity="0.9" d="M280 160c0-44.2-35.8-80-80-80-34.4 0-63.8 21.7-75.2 52.2C109.6 124.6 88 118 64 118c-44.2 0-80 35.8-80 80s35.8 80 80 80h216c33.1 0 60-26.9 60-60s-26.9-60-60-60h-0.8c0.5-2.6 0.8-5.3 0.8-8z"/>
+  </g>
+  <!-- POS terminal icon -->
+  <g transform="translate(156, 240)">
+    <rect x="0" y="0" width="200" height="160" rx="16" fill="white"/>
+    <rect x="20" y="20" width="160" height="60" rx="8" fill="#2563eb"/>
+    <text x="100" y="60" text-anchor="middle" fill="white" font-family="system-ui" font-size="24" font-weight="bold">$0.00</text>
+    <!-- Keypad dots -->
+    <circle cx="50" cy="110" r="12" fill="#e5e7eb"/>
+    <circle cx="100" cy="110" r="12" fill="#e5e7eb"/>
+    <circle cx="150" cy="110" r="12" fill="#e5e7eb"/>
+    <circle cx="50" cy="145" r="12" fill="#e5e7eb"/>
+    <circle cx="100" cy="145" r="12" fill="#e5e7eb"/>
+    <circle cx="150" cy="145" r="12" fill="#22c55e"/>
+  </g>
+</svg>

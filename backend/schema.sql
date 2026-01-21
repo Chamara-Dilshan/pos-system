@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS orders (
     payment_type TEXT CHECK(payment_type IN ('cash', 'card')) DEFAULT 'cash',
     payment_status TEXT CHECK(payment_status IN ('paid', 'pending', 'refunded')) DEFAULT 'paid',
     status TEXT CHECK(status IN ('completed', 'cancelled', 'refunded')) DEFAULT 'completed',
+    stripe_payment_intent_id TEXT,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)

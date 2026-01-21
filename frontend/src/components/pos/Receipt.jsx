@@ -3,8 +3,10 @@
 // ============================================================================
 import { Store } from 'lucide-react';
 import { tokens, colorScheme } from '../../config/colors';
+import { useSettings } from '../../context/SettingsContext';
 
 const Receipt = ({ order, items, change }) => {
+  const { settings } = useSettings();
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
@@ -25,8 +27,9 @@ const Receipt = ({ order, items, change }) => {
         >
           <Store size={24} className="text-white" />
         </div>
-        <h1 className={`text-2xl font-bold ${tokens.text.primary}`}>CloudPOS</h1>
-        <p className={`text-sm ${tokens.text.muted}`}>Point of Sale System</p>
+        <h1 className={`text-2xl font-bold ${tokens.text.primary}`}>{settings.store_name}</h1>
+        {settings.store_phone && <p className={`text-sm ${tokens.text.muted}`}>{settings.store_phone}</p>}
+        {settings.store_address && <p className={`text-sm ${tokens.text.muted}`}>{settings.store_address}</p>}
       </div>
 
       {/* ── Order Info ─────────────────────────────────────────────────────── */}
@@ -51,19 +54,26 @@ const Receipt = ({ order, items, change }) => {
           Order Items
         </h3>
         <div className="space-y-3">
-          {items.map((item, index) => (
-            <div key={index} className="flex justify-between">
-              <div className="flex-1">
-                <p className={`font-medium ${tokens.text.primary}`}>{item.name}</p>
-                <p className={`text-sm ${tokens.text.muted}`}>
-                  {item.quantity} × ${item.price.toFixed(2)}
-                </p>
+          {items.map((item, index) => {
+            // Support both cart items (name, price) and order items (product_name, unit_price)
+            const itemName = item.name || item.product_name;
+            const itemPrice = item.price ?? item.unit_price;
+            const itemTotal = item.total_price ?? (itemPrice * item.quantity);
+
+            return (
+              <div key={index} className="flex justify-between">
+                <div className="flex-1">
+                  <p className={`font-medium ${tokens.text.primary}`}>{itemName}</p>
+                  <p className={`text-sm ${tokens.text.muted}`}>
+                    {item.quantity} × {settings.currency_symbol}{itemPrice.toFixed(2)}
+                  </p>
+                </div>
+                <span className={`font-semibold ${tokens.text.primary}`}>
+                  {settings.currency_symbol}{itemTotal.toFixed(2)}
+                </span>
               </div>
-              <span className={`font-semibold ${tokens.text.primary}`}>
-                ${(item.price * item.quantity).toFixed(2)}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -71,21 +81,21 @@ const Receipt = ({ order, items, change }) => {
       <div className="border-t border-gray-200 pt-3 space-y-2">
         <div className={`flex justify-between ${tokens.text.secondary}`}>
           <span>Subtotal:</span>
-          <span>${order.subtotal.toFixed(2)}</span>
+          <span>{settings.currency_symbol}{order.subtotal.toFixed(2)}</span>
         </div>
         {order.discount_value > 0 && (
           <div className="flex justify-between text-green-600">
             <span>Discount:</span>
-            <span>-${order.discount_value.toFixed(2)}</span>
+            <span>-{settings.currency_symbol}{order.discount_value.toFixed(2)}</span>
           </div>
         )}
         <div className={`flex justify-between ${tokens.text.secondary}`}>
           <span>Tax:</span>
-          <span>${order.tax.toFixed(2)}</span>
+          <span>{settings.currency_symbol}{order.tax.toFixed(2)}</span>
         </div>
         <div className={`flex justify-between text-xl font-bold ${tokens.text.primary} pt-3 border-t border-gray-200`}>
           <span>Total:</span>
-          <span>${order.total.toFixed(2)}</span>
+          <span>{settings.currency_symbol}{order.total.toFixed(2)}</span>
         </div>
       </div>
 
@@ -99,11 +109,11 @@ const Receipt = ({ order, items, change }) => {
           <>
             <div className={`flex justify-between ${tokens.text.secondary}`}>
               <span>Cash Received:</span>
-              <span>${(order.total + change).toFixed(2)}</span>
+              <span>{settings.currency_symbol}{(order.total + change).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-green-600 font-semibold">
               <span>Change:</span>
-              <span>${change.toFixed(2)}</span>
+              <span>{settings.currency_symbol}{change.toFixed(2)}</span>
             </div>
           </>
         )}
@@ -113,7 +123,7 @@ const Receipt = ({ order, items, change }) => {
       <div className="text-center mt-6 pt-4 border-t-2 border-dashed border-gray-200">
         <p className={`font-medium ${tokens.text.primary}`}>Thank you for your purchase!</p>
         <p className={`text-xs ${tokens.text.muted} mt-2`}>
-          Powered by CloudPOS • Receipt #{order.order_number}
+          Powered by {settings.store_name} • Receipt #{order.order_number}
         </p>
         <div className="mt-4 flex justify-center">
           <div className="w-32 h-8 bg-gray-100 rounded flex items-center justify-center">

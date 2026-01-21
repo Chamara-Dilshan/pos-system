@@ -57,8 +57,14 @@ settings.get('/', async (c) => {
 settings.put('/', adminMiddleware, async (c) => {
   const db = c.env.DB;
   const user = c.get('user');
+  const firebase_uid = user.user_id || user.uid;
 
   try {
+    // Get the database user ID
+    const dbUser = await db.prepare(
+      'SELECT id FROM users WHERE firebase_uid = ?'
+    ).bind(firebase_uid).first();
+
     const {
       store_name,
       store_email,
@@ -67,10 +73,6 @@ settings.put('/', adminMiddleware, async (c) => {
       tax_rate,
       currency,
       currency_symbol,
-      theme_primary,
-      theme_success,
-      theme_danger,
-      theme_neutral,
     } = await c.req.json();
 
     // Validate tax rate
@@ -110,26 +112,10 @@ settings.put('/', adminMiddleware, async (c) => {
       updates.push('currency_symbol = ?');
       params.push(currency_symbol);
     }
-    if (theme_primary !== undefined) {
-      updates.push('theme_primary = ?');
-      params.push(theme_primary);
-    }
-    if (theme_success !== undefined) {
-      updates.push('theme_success = ?');
-      params.push(theme_success);
-    }
-    if (theme_danger !== undefined) {
-      updates.push('theme_danger = ?');
-      params.push(theme_danger);
-    }
-    if (theme_neutral !== undefined) {
-      updates.push('theme_neutral = ?');
-      params.push(theme_neutral);
-    }
 
     updates.push('updated_at = CURRENT_TIMESTAMP');
     updates.push('updated_by = ?');
-    params.push(user.id);
+    params.push(dbUser?.id || null);
 
     if (updates.length === 2) {
       return c.json({ error: 'No fields to update' }, 400);
@@ -154,8 +140,14 @@ settings.put('/', adminMiddleware, async (c) => {
 settings.post('/reset', adminMiddleware, async (c) => {
   const db = c.env.DB;
   const user = c.get('user');
+  const firebase_uid = user.user_id || user.uid;
 
   try {
+    // Get the database user ID
+    const dbUser = await db.prepare(
+      'SELECT id FROM users WHERE firebase_uid = ?'
+    ).bind(firebase_uid).first();
+
     await db.prepare(`
       UPDATE settings SET
         store_name = 'CloudPOS',
@@ -165,14 +157,10 @@ settings.post('/reset', adminMiddleware, async (c) => {
         tax_rate = 10.0,
         currency = 'USD',
         currency_symbol = '$',
-        theme_primary = 'blue',
-        theme_success = 'green',
-        theme_danger = 'red',
-        theme_neutral = 'gray',
         updated_at = CURRENT_TIMESTAMP,
         updated_by = ?
       WHERE id = 1
-    `).bind(user.id).run();
+    `).bind(dbUser?.id || null).run();
 
     const settings = await db.prepare('SELECT * FROM settings WHERE id = 1').first();
 

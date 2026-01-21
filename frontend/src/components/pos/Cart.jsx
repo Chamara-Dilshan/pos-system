@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { ShoppingCart, Trash2, Plus, Minus, Percent, DollarSign, ShoppingBag } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useSettings } from '../../context/SettingsContext';
 import Button from '../common/Button';
 import PaymentModal from './PaymentModal';
 import { tokens, cardColors, buttonColors, alertColors, colorScheme } from '../../config/colors';
@@ -23,9 +24,13 @@ const Cart = () => {
     getItemCount,
   } = useCart();
 
+  const { settings } = useSettings();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [discountInput, setDiscountInput] = useState({ type: 'percentage', value: '' });
+
+  const taxRate = settings.tax_rate || 10;
+  const currencySymbol = settings.currency_symbol || '$';
 
   const handleQuantityChange = (productId, currentQuantity, change) => {
     const newQuantity = currentQuantity + change;
@@ -54,11 +59,10 @@ const Cart = () => {
     setShowDiscountInput(false);
   };
 
-  const TAX_RATE = 10;
   const subtotal = calculateSubtotal();
   const discountAmount = calculateDiscount();
-  const tax = calculateTax(TAX_RATE);
-  const total = calculateTotal(TAX_RATE);
+  const tax = calculateTax(taxRate);
+  const total = calculateTotal(taxRate);
 
   return (
     <>
@@ -140,10 +144,10 @@ const Cart = () => {
                     {/* Price */}
                     <div className="text-right">
                       <div className={`text-xs ${tokens.text.muted}`}>
-                        ${item.price.toFixed(2)} each
+                        {currencySymbol}{item.price.toFixed(2)} each
                       </div>
                       <div className={`font-bold ${tokens.text.primary}`}>
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {currencySymbol}{(item.price * item.quantity).toFixed(2)}
                       </div>
                     </div>
                   </div>
@@ -159,7 +163,7 @@ const Cart = () => {
             {/* Subtotal */}
             <div className={`flex justify-between ${tokens.text.secondary}`}>
               <span>Subtotal:</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <span className="font-medium">{currencySymbol}{subtotal.toFixed(2)}</span>
             </div>
 
             {/* Discount Section */}
@@ -178,7 +182,7 @@ const Cart = () => {
                   Discount {discount.type === 'percentage' ? `(${discount.value}%)` : ''}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold">-${discountAmount.toFixed(2)}</span>
+                  <span className="font-semibold">-{currencySymbol}{discountAmount.toFixed(2)}</span>
                   <button
                     onClick={handleRemoveDiscount}
                     className="p-1 rounded hover:bg-green-200 transition-colors"
@@ -244,14 +248,14 @@ const Cart = () => {
 
             {/* Tax */}
             <div className={`flex justify-between ${tokens.text.secondary}`}>
-              <span>Tax ({TAX_RATE}%):</span>
-              <span className="font-medium">${tax.toFixed(2)}</span>
+              <span>Tax ({taxRate}%):</span>
+              <span className="font-medium">{currencySymbol}{tax.toFixed(2)}</span>
             </div>
 
             {/* Total */}
             <div className={`flex justify-between text-xl font-bold ${tokens.text.primary} pt-3 border-t ${tokens.border.default}`}>
               <span>Total:</span>
-              <span style={{ color: colorScheme.primary[600] }}>${total.toFixed(2)}</span>
+              <span style={{ color: colorScheme.primary[600] }}>{currencySymbol}{total.toFixed(2)}</span>
             </div>
 
             {/* Payment Button */}
