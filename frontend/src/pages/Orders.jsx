@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, ShoppingBag, Search, Filter } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import Loading from '../components/common/Loading';
 import Button from '../components/common/Button';
 import { StatusBadge } from '../components/common/Badge';
@@ -14,6 +15,7 @@ import Table from '../components/common/Table';
 import { tokens, cardColors, alertColors, inputColors, colorScheme } from '../config/colors';
 
 const Orders = () => {
+  const { settings } = useSettings();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,7 +102,7 @@ const Orders = () => {
       width: '140px',
       render: (value) => (
         <span className="text-sm font-bold" style={{ color: colorScheme.primary[600] }}>
-          ${value.toFixed(2)}
+          {settings.currency_symbol}{value.toFixed(2)}
         </span>
       ),
     },
@@ -123,7 +125,10 @@ const Orders = () => {
       className: 'text-right',
       render: (_, row) => (
         <Button
-          onClick={() => navigate(`/orders/${row.id}`)}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/orders/${row.id}`);
+          }}
           variant="primary"
           size="sm"
           icon={Eye}

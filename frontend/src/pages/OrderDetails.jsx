@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import Button from '../components/common/Button';
 import Loading from '../components/common/Loading';
 import Receipt from '../components/pos/Receipt';
@@ -27,6 +28,7 @@ const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { settings } = useSettings();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,7 +95,7 @@ const OrderDetails = () => {
     <div className="space-y-6">
       {/* ── Back Button ────────────────────────────────────────────────────── */}
       <button
-        onClick={() => navigate('/orders')}
+        onClick={() => navigate(-1)}
         className={`flex items-center gap-2 ${tokens.text.muted} hover:${tokens.text.primary} transition-colors font-medium print:hidden`}
       >
         <ArrowLeft size={20} />
@@ -213,7 +215,7 @@ const OrderDetails = () => {
                           {item.product_name}
                         </h3>
                         <p className={`text-sm ${tokens.text.muted}`}>
-                          {item.quantity} × ${item.unit_price.toFixed(2)}
+                          {item.quantity} × {settings.currency_symbol}{item.unit_price.toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -222,7 +224,7 @@ const OrderDetails = () => {
                         className="font-bold"
                         style={{ color: colorScheme.primary[600] }}
                       >
-                        ${item.total_price.toFixed(2)}
+                        {settings.currency_symbol}{item.total_price.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -244,22 +246,22 @@ const OrderDetails = () => {
             <div className="space-y-3">
               <div className={`flex justify-between ${tokens.text.secondary}`}>
                 <span>Subtotal:</span>
-                <span>${order.subtotal.toFixed(2)}</span>
+                <span>{settings.currency_symbol}{order.subtotal.toFixed(2)}</span>
               </div>
               {order.discount_value > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Discount:</span>
-                  <span>-${order.discount_value.toFixed(2)}</span>
+                  <span>-{settings.currency_symbol}{order.discount_value.toFixed(2)}</span>
                 </div>
               )}
               <div className={`flex justify-between ${tokens.text.secondary}`}>
                 <span>Tax:</span>
-                <span>${order.tax.toFixed(2)}</span>
+                <span>{settings.currency_symbol}{order.tax.toFixed(2)}</span>
               </div>
               <div className={`flex justify-between text-xl font-bold ${tokens.text.primary} pt-4 border-t ${tokens.border.default}`}>
                 <span>Total:</span>
                 <span style={{ color: colorScheme.primary[600] }}>
-                  ${order.total.toFixed(2)}
+                  {settings.currency_symbol}{order.total.toFixed(2)}
                 </span>
               </div>
             </div>
