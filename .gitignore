@@ -43,3 +43,10 @@ wrangler.toml.local
 
 # OS
 Thumbs.db
+
+# Claude AI
+.claude/
+CLAUDE.MD
+token.txt
+PWA-GUIDE.txt
+SETUP_GUIDE.md
