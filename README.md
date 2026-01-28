@@ -4,7 +4,7 @@ A modern, serverless POS system built with React, Cloudflare Workers, and D1 dat
 
 ## Features
 
-### Phase 1 - MVP (Current)
+### Phase 1 - MVP
 - ✅ User Authentication (Firebase Auth)
 - ✅ Product Management (CRUD operations)
 - ✅ Category Management
@@ -12,18 +12,18 @@ A modern, serverless POS system built with React, Cloudflare Workers, and D1 dat
 - ✅ Order Management
 - ✅ Receipt Generation
 
-### Phase 2 - Business Tools (Coming Soon)
-- Inventory Tracking
-- Low Stock Alerts
-- User Management (Admin/Cashier roles)
-- Discount System
-- Daily Reports
+### Phase 2 - Business Tools
+- ✅Inventory Tracking
+- ✅Low Stock Alerts
+- ✅User Management (Admin/Cashier roles)
+- ✅Discount System
+- ✅Daily Reports
 
-### Phase 3 - Advanced Features (Planned)
-- Stripe Payment Integration
-- Advanced Reports & Analytics
-- Store Settings & Customization
-- PWA Support (Offline mode)
+### Phase 3 - Advanced Features
+- ✅Stripe Payment Integration
+- ✅Advanced Reports & Analytics
+- ✅Store Settings & Customization
+- ✅PWA Support (Offline mode)
 
 ## Tech Stack
 
