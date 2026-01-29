@@ -6,7 +6,9 @@ A modern, serverless POS system built with React, Cloudflare Workers, and D1 dat
 
 ### Phase 1 - MVP
 - ✅ User Authentication (Firebase Auth)
+- ✅ First-Time Setup Wizard
 - ✅ Product Management (CRUD operations)
+- ✅ Multi-Unit Support (piece, weight, volume)
 - ✅ Category Management
 - ✅ POS Interface for sales
 - ✅ Order Management
@@ -248,6 +250,17 @@ For complete API documentation, see [CLAUDE.MD](./CLAUDE.MD#api-endpoints)
 - View own orders
 - Generate receipts
 
+## Security Features
+
+CloudPOS implements multiple security layers to protect your business:
+
+- **One-Time Setup Wizard**: First admin account creation is locked after initial setup
+- **Role-Based Access Control**: Strict separation between admin and cashier permissions
+- **Server-Side Validation**: All user roles are enforced server-side, preventing privilege escalation
+- **Self-Protection**: Admins cannot edit or deactivate their own accounts, preventing accidental lockouts
+- **Firebase Authentication**: Industry-standard auth with password reset and email verification
+- **API Security**: All endpoints are protected with authentication middleware
+
 ## Development Guidelines
 
 - Follow React best practices
@@ -286,6 +299,28 @@ ISC
 ## Support
 
 For questions and issues, please open a GitHub issue.
+
+## Recent Updates
+
+### January 30, 2026
+
+**Weight/Volume Measurement Support**
+- Added support for selling products by weight (kg, g) and volume (L, mL)
+- Decimal quantity tracking and pricing
+- Dynamic cart input based on product type
+- Full backward compatibility with piece-based products
+
+**User Self-Protection Security**
+- Admins can no longer edit or deactivate their own accounts
+- Prevents accidental system lockouts
+- Both client and server-side validation
+
+**First-Time Setup Wizard**
+- Automatic setup flow for new deployments
+- Creates first admin account securely
+- One-time use with auto-lock after completion
+
+For detailed technical documentation, see [CLAUDE.MD](./CLAUDE.MD)
 
 ---
 
