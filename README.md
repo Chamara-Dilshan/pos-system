@@ -4,7 +4,7 @@ A modern, serverless POS system built with React, Cloudflare Workers, and D1 dat
 
 ## Features
 
-### Phase 1 - MVP (Current)
+### Phase 1 - MVP
 - ✅ User Authentication (Firebase Auth)
 - ✅ Product Management (CRUD operations)
 - ✅ Category Management
@@ -12,18 +12,18 @@ A modern, serverless POS system built with React, Cloudflare Workers, and D1 dat
 - ✅ Order Management
 - ✅ Receipt Generation
 
-### Phase 2 - Business Tools (Coming Soon)
-- Inventory Tracking
-- Low Stock Alerts
-- User Management (Admin/Cashier roles)
-- Discount System
-- Daily Reports
+### Phase 2 - Business Tools
+- ✅ Inventory Tracking
+- ✅ Low Stock Alerts
+- ✅ User Management (Admin/Cashier roles)
+- ✅ Discount System
+- ✅ Daily Reports
 
-### Phase 3 - Advanced Features (Planned)
-- Stripe Payment Integration
-- Advanced Reports & Analytics
-- Store Settings & Customization
-- PWA Support (Offline mode)
+### Phase 3 - Advanced Features
+- ✅ Stripe Payment Integration
+- ✅ Advanced Reports & Analytics
+- ✅ Store Settings & Customization
+- ✅ PWA Support (Offline mode)
 
 ## Tech Stack
 
@@ -133,6 +133,17 @@ pos-system/
    ```
    The app will run on `http://localhost:5173`
 
+3. **First-Time Setup**
+
+   When you first visit the application, you'll be automatically redirected to `/setup` to create your administrator account:
+
+   - Fill in your name, email, and password
+   - Click "Complete Setup"
+   - You'll be logged in as admin automatically
+   - The setup wizard locks itself after creating the first admin
+
+   **Note:** Only the first user can be created through the setup wizard. Subsequent users must be created by admins through the Users management page or via normal registration (which creates cashier accounts).
+
 ### Database Management
 
 ```bash
@@ -196,9 +207,11 @@ Your app will be deployed to: `https://cloudpos.pages.dev`
 ## API Documentation
 
 ### Authentication
-- `POST /api/auth/register` - Register new user
+- `GET /api/auth/setup-status` - Check if initial setup is complete (Public)
+- `POST /api/auth/setup` - Create first admin user (Public, one-time use)
+- `POST /api/auth/register` - Register new user (creates cashier role)
 - `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
+- `GET /api/auth/me` - Get current user (Auth required)
 
 ### Products
 - `GET /api/products` - List all products

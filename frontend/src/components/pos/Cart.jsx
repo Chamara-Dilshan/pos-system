@@ -138,36 +138,58 @@ const Cart = () => {
 
                   <div className="flex justify-between items-center">
                     {/* Quantity Controls */}
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleQuantityChange(item.id, item.quantity, -1)}
-                        className="w-8 h-8 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center transition-colors"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className={`w-10 text-center font-semibold ${tokens.text.primary}`}>
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => handleQuantityChange(item.id, item.quantity, 1)}
-                        disabled={item.quantity >= item.stock}
-                        className="w-8 h-8 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
+                    {(item.unit_type || 'piece') === 'piece' ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleQuantityChange(item.id, item.quantity, -1)}
+                          className="w-8 h-8 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 flex items-center justify-center transition-colors"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className={`w-10 text-center font-semibold ${tokens.text.primary}`}>
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => handleQuantityChange(item.id, item.quantity, 1)}
+                          disabled={item.quantity >= item.stock}
+                          className="w-8 h-8 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max={item.stock}
+                          value={item.quantity}
+                          onChange={(e) => updateQuantity(item.id, e.target.value)}
+                          className="w-20 px-2 py-1.5 border border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="0.00"
+                        />
+                        <span className={`text-xs ${tokens.text.muted} font-medium`}>
+                          {item.unit || 'pcs'}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Price */}
                     <div className="text-right">
                       <div className={`text-xs ${tokens.text.muted}`}>
-                        {currencySymbol}{item.price.toFixed(2)} each
+                        {currencySymbol}{item.price.toFixed(2)}/{item.unit || 'pcs'}
                       </div>
                       <div className={`font-bold ${tokens.text.primary}`}>
-                        {currencySymbol}{(item.price * item.quantity).toFixed(2)}
+                        {item.quantity > 0 ? (
+                          <>{currencySymbol}{(item.price * item.quantity).toFixed(2)}</>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Enter qty</span>
+                        )}
                       </div>
-                      {item.quantity >= item.stock && (
+                      {item.quantity >= item.stock && item.stock > 0 && (
                         <div className="text-xs text-amber-600 font-medium mt-0.5">
-                          Max stock reached
+                          Max: {item.stock} {item.unit || 'pcs'}
                         </div>
                       )}
                     </div>

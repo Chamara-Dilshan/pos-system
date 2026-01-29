@@ -78,6 +78,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const setupAdmin = async (email, password, name) => {
+    try {
+      setError(null);
+      // 1. Create Firebase user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      await updateProfile(userCredential.user, { displayName: name });
+
+      // 2. Get token
+      const token = await userCredential.user.getIdToken();
+      api.setToken(token);
+
+      // 3. Call setup endpoint (creates admin)
+      const response = await api.setupAdmin({
+        firebase_uid: userCredential.user.uid,
+        name,
+        email,
+      });
+
+      // 4. Set user data
+      setUserData(response.user);
+
+      return userCredential.user;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   const login = async (email, password) => {
     try {
       setError(null);
@@ -135,6 +164,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     register,
+    setupAdmin,
     login,
     logout,
     resetPassword,

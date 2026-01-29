@@ -3,10 +3,75 @@ import { authMiddleware } from '../middleware/auth.js';
 
 const auth = new Hono();
 
+// Check setup status - public endpoint
+auth.get('/setup-status', async (c) => {
+  try {
+    const db = c.env.DB;
+
+    const result = await db.prepare(
+      'SELECT COUNT(*) as count FROM users WHERE role = ?'
+    ).bind('admin').first();
+
+    return c.json({
+      success: true,
+      setupComplete: result.count > 0,
+      adminExists: result.count > 0,
+    });
+  } catch (error) {
+    return c.json({ error: 'Failed to check setup status' }, 500);
+  }
+});
+
+// Setup - create first admin user (only works when no admin exists)
+auth.post('/setup', async (c) => {
+  try {
+    const { firebase_uid, name, email } = await c.req.json();
+
+    if (!firebase_uid || !name || !email) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    const db = c.env.DB;
+
+    // Check if admin already exists
+    const adminCheck = await db.prepare(
+      'SELECT COUNT(*) as count FROM users WHERE role = ?'
+    ).bind('admin').first();
+
+    if (adminCheck.count > 0) {
+      return c.json({ error: 'Setup already completed' }, 403);
+    }
+
+    // Check if user already exists with this firebase_uid
+    const existing = await db.prepare(
+      'SELECT * FROM users WHERE firebase_uid = ?'
+    ).bind(firebase_uid).first();
+
+    if (existing) {
+      return c.json({ error: 'User already exists' }, 400);
+    }
+
+    // Create first admin user (HARDCODED role)
+    const result = await db.prepare(`
+      INSERT INTO users (firebase_uid, name, email, role)
+      VALUES (?, ?, ?, 'admin') RETURNING *
+    `).bind(firebase_uid, name, email).first();
+
+    return c.json({
+      success: true,
+      message: 'Setup completed successfully',
+      user: result,
+    }, 201);
+  } catch (error) {
+    return c.json({ error: 'Failed to complete setup' }, 500);
+  }
+});
+
 // Register/Sync user from Firebase
+// SECURITY FIX: Role parameter removed - always creates cashier
 auth.post('/register', async (c) => {
   try {
-    const { firebase_uid, name, email, role } = await c.req.json();
+    const { firebase_uid, name, email } = await c.req.json();
 
     if (!firebase_uid || !name || !email) {
       return c.json({ error: 'Missing required fields' }, 400);
@@ -27,11 +92,11 @@ auth.post('/register', async (c) => {
       });
     }
 
-    // Create new user
+    // Create new user - ALWAYS as cashier (security fix)
     const result = await db.prepare(`
       INSERT INTO users (firebase_uid, name, email, role)
-      VALUES (?, ?, ?, ?) RETURNING *
-    `).bind(firebase_uid, name, email, role || 'cashier').first();
+      VALUES (?, ?, ?, 'cashier') RETURNING *
+    `).bind(firebase_uid, name, email).first();
 
     return c.json({
       success: true,

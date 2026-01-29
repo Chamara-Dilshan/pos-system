@@ -6,6 +6,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import Setup from './pages/auth/Setup';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import ProductForm from './pages/ProductForm';
@@ -19,6 +20,7 @@ import Settings from './pages/Settings';
 
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import SetupGuard from './components/common/SetupGuard';
 import InstallPrompt from './components/pwa/InstallPrompt';
 import OfflineIndicator from './components/pwa/OfflineIndicator';
 
@@ -33,130 +35,155 @@ function App() {
           <InstallPrompt />
 
           <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          {/* Setup route - accessible only when no admin exists */}
+          <Route path="/setup" element={<Setup />} />
 
-          {/* Protected routes */}
+          {/* Public routes - protected by SetupGuard */}
+          <Route path="/login" element={<SetupGuard><Login /></SetupGuard>} />
+          <Route path="/register" element={<SetupGuard><Register /></SetupGuard>} />
+          <Route path="/forgot-password" element={<SetupGuard><ForgotPassword /></SetupGuard>} />
+
+          {/* Protected routes - wrapped with SetupGuard and ProtectedRoute */}
           <Route
             path="/"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/pos"
             element={
-              <ProtectedRoute>
-                <Layout fullWidth>
-                  <POS />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute>
+                  <Layout fullWidth>
+                    <POS />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/products"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <Products />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <Products />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/products/new"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <ProductForm />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <ProductForm />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/products/:id"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <ProductForm />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <ProductForm />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/categories"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <Categories />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <Categories />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/orders"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <Orders />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute>
+                  <Layout>
+                    <Orders />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/orders/:id"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <OrderDetails />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute>
+                  <Layout>
+                    <OrderDetails />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/reports"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <Reports />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <Reports />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/users"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <Users />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <Users />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 
           <Route
             path="/settings"
             element={
-              <ProtectedRoute adminOnly>
-                <Layout>
-                  <Settings />
-                </Layout>
-              </ProtectedRoute>
+              <SetupGuard>
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <Settings />
+                  </Layout>
+                </ProtectedRoute>
+              </SetupGuard>
             }
           />
 

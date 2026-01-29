@@ -59,13 +59,14 @@ const Receipt = ({ order, items, change }) => {
             const itemName = item.name || item.product_name;
             const itemPrice = item.price ?? item.unit_price;
             const itemTotal = item.total_price ?? (itemPrice * item.quantity);
+            const unit = item.unit || 'pcs';
 
             return (
               <div key={index} className="flex justify-between">
                 <div className="flex-1">
                   <p className={`font-medium ${tokens.text.primary}`}>{itemName}</p>
                   <p className={`text-sm ${tokens.text.muted}`}>
-                    {item.quantity} × {settings.currency_symbol}{itemPrice.toFixed(2)}
+                    {item.quantity} {unit} × {settings.currency_symbol}{itemPrice.toFixed(2)}/{unit}
                   </p>
                 </div>
                 <span className={`font-semibold ${tokens.text.primary}`}>

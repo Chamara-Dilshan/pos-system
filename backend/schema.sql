@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS products (
     cost_price REAL DEFAULT 0,
     stock INTEGER DEFAULT 0,
     min_stock INTEGER DEFAULT 5,
+    unit_type TEXT CHECK(unit_type IN ('piece', 'weight', 'volume')) DEFAULT 'piece',
+    unit TEXT CHECK(unit IN ('pcs', 'kg', 'g', 'l', 'ml')) DEFAULT 'pcs',
     image_url TEXT,
     is_active INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -61,6 +63,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     product_id INTEGER,
     product_name TEXT NOT NULL,
     quantity INTEGER NOT NULL,
+    unit TEXT DEFAULT 'pcs',
     unit_price REAL NOT NULL,
     total_price REAL NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
@@ -79,7 +82,9 @@ CREATE TABLE IF NOT EXISTS settings (
     currency TEXT DEFAULT 'USD',
     currency_symbol TEXT DEFAULT '$',
     receipt_footer TEXT DEFAULT 'Thank you for your purchase!',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER,
+    FOREIGN KEY (updated_by) REFERENCES users(id)
 );
 
 -- Indexes for better performance

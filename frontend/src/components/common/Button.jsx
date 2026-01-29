@@ -15,6 +15,7 @@ const Button = ({
   iconPosition = 'left',
   fullWidth = false,
   className = '',
+  title = '',
 }) => {
   // ── Base Styles ───────────────────────────────────────────────────────────
   const baseStyles = `
@@ -67,6 +68,7 @@ const Button = ({
       type={type}
       onClick={onClick}
       disabled={isDisabled}
+      title={title}
       className={`
         ${baseStyles}
         ${sizes[size]}

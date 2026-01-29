@@ -99,11 +99,33 @@ products.post('/', authMiddleware, adminMiddleware, async (c) => {
       cost_price,
       stock,
       min_stock,
+      unit_type,
+      unit,
       image_url,
     } = await c.req.json();
 
     if (!name || !price) {
       return c.json({ error: 'Name and price are required' }, 400);
+    }
+
+    // Validate unit_type and unit combination
+    const validUnits = {
+      piece: ['pcs'],
+      weight: ['kg', 'g'],
+      volume: ['l', 'ml']
+    };
+
+    const finalUnitType = unit_type || 'piece';
+    const finalUnit = unit || 'pcs';
+
+    if (!validUnits[finalUnitType] || !validUnits[finalUnitType].includes(finalUnit)) {
+      return c.json({ error: `Invalid unit '${finalUnit}' for unit_type '${finalUnitType}'` }, 400);
+    }
+
+    // Parse stock as float to support decimal values
+    const stockValue = parseFloat(stock) || 0;
+    if (stockValue < 0) {
+      return c.json({ error: 'Stock cannot be negative' }, 400);
     }
 
     const db = c.env.DB;
@@ -122,16 +144,18 @@ products.post('/', authMiddleware, adminMiddleware, async (c) => {
     const result = await db.prepare(`
       INSERT INTO products (
         category_id, name, sku, price, cost_price,
-        stock, min_stock, image_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
+        stock, min_stock, unit_type, unit, image_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
     `).bind(
       category_id || null,
       name,
       sku || null,
       price,
       cost_price || 0,
-      stock || 0,
+      stockValue,
       min_stock || 5,
+      finalUnitType,
+      finalUnit,
       image_url || null
     ).first();
 
@@ -157,12 +181,34 @@ products.put('/:id', authMiddleware, adminMiddleware, async (c) => {
       cost_price,
       stock,
       min_stock,
+      unit_type,
+      unit,
       image_url,
       is_active,
     } = await c.req.json();
 
     if (!name || !price) {
       return c.json({ error: 'Name and price are required' }, 400);
+    }
+
+    // Validate unit_type and unit combination
+    const validUnits = {
+      piece: ['pcs'],
+      weight: ['kg', 'g'],
+      volume: ['l', 'ml']
+    };
+
+    const finalUnitType = unit_type || 'piece';
+    const finalUnit = unit || 'pcs';
+
+    if (!validUnits[finalUnitType] || !validUnits[finalUnitType].includes(finalUnit)) {
+      return c.json({ error: `Invalid unit '${finalUnit}' for unit_type '${finalUnitType}'` }, 400);
+    }
+
+    // Parse stock as float to support decimal values
+    const stockValue = stock !== undefined ? parseFloat(stock) : 0;
+    if (stockValue < 0) {
+      return c.json({ error: 'Stock cannot be negative' }, 400);
     }
 
     const db = c.env.DB;
@@ -187,6 +233,8 @@ products.put('/:id', authMiddleware, adminMiddleware, async (c) => {
         cost_price = ?,
         stock = ?,
         min_stock = ?,
+        unit_type = ?,
+        unit = ?,
         image_url = ?,
         is_active = ?
       WHERE id = ? RETURNING *
@@ -196,8 +244,10 @@ products.put('/:id', authMiddleware, adminMiddleware, async (c) => {
       sku || null,
       price,
       cost_price || 0,
-      stock || 0,
+      stockValue,
       min_stock || 5,
+      finalUnitType,
+      finalUnit,
       image_url || null,
       is_active !== undefined ? is_active : 1,
       id

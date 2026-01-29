@@ -43,6 +43,8 @@ const ProductForm = () => {
     cost_price: '',
     stock: '0',
     min_stock: '5',
+    unit_type: 'piece',
+    unit: 'pcs',
     image_url: '',
   });
 
@@ -76,6 +78,8 @@ const ProductForm = () => {
         cost_price: product.cost_price || '',
         stock: product.stock || '0',
         min_stock: product.min_stock || '5',
+        unit_type: product.unit_type || 'piece',
+        unit: product.unit || 'pcs',
         image_url: product.image_url || '',
       });
       // Set image preview for existing product
@@ -158,8 +162,10 @@ const ProductForm = () => {
         category_id: formData.category_id ? parseInt(formData.category_id) : null,
         price: parseFloat(formData.price),
         cost_price: parseFloat(formData.cost_price) || 0,
-        stock: parseInt(formData.stock) || 0,
-        min_stock: parseInt(formData.min_stock) || 5,
+        stock: parseFloat(formData.stock) || 0,
+        min_stock: parseFloat(formData.min_stock) || 5,
+        unit_type: formData.unit_type || 'piece',
+        unit: formData.unit || 'pcs',
       };
 
       if (isEditing) {
@@ -338,8 +344,74 @@ const ProductForm = () => {
               Pricing & Inventory
             </h3>
 
+            {/* Unit Type */}
+            <div>
+              <label className={`block text-sm font-medium ${tokens.text.secondary} mb-2`}>
+                Unit Type
+              </label>
+              <select
+                name="unit_type"
+                value={formData.unit_type}
+                onChange={(e) => {
+                  const unitType = e.target.value;
+                  let newUnit = 'pcs';
+                  if (unitType === 'weight') newUnit = 'kg';
+                  if (unitType === 'volume') newUnit = 'l';
+                  setFormData({ ...formData, unit_type: unitType, unit: newUnit });
+                }}
+                className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${tokens.text.primary}`}
+                required
+              >
+                <option value="piece">Piece/Unit (Countable Items)</option>
+                <option value="weight">Weight (Sold by kg/g)</option>
+                <option value="volume">Volume (Sold by L/mL)</option>
+              </select>
+              <p className={`text-xs ${tokens.text.muted} mt-1`}>
+                How this product is sold and measured
+              </p>
+            </div>
+
+            {/* Unit */}
+            <div>
+              <label className={`block text-sm font-medium ${tokens.text.secondary} mb-2`}>
+                Measurement Unit
+              </label>
+              {formData.unit_type === 'weight' && (
+                <select
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${tokens.text.primary}`}
+                  required
+                >
+                  <option value="kg">Kilograms (kg)</option>
+                  <option value="g">Grams (g)</option>
+                </select>
+              )}
+              {formData.unit_type === 'volume' && (
+                <select
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${tokens.text.primary}`}
+                  required
+                >
+                  <option value="l">Liters (L)</option>
+                  <option value="ml">Milliliters (mL)</option>
+                </select>
+              )}
+              {formData.unit_type === 'piece' && (
+                <input
+                  type="text"
+                  value="Pieces (pcs)"
+                  disabled
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 ${tokens.text.muted}`}
+                />
+              )}
+            </div>
+
             <Input
-              label="Selling Price"
+              label={`Selling Price (per ${formData.unit})`}
               type="number"
               name="price"
               value={formData.price}
@@ -366,37 +438,40 @@ const ProductForm = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Stock Quantity"
+                label={`Stock Quantity (${formData.unit})`}
                 type="number"
                 name="stock"
                 value={formData.stock}
                 onChange={handleChange}
-                placeholder="0"
+                placeholder={formData.unit_type === 'piece' ? '0' : '0.00'}
+                step={formData.unit_type === 'piece' ? '1' : '0.01'}
                 min="0"
                 required
+                helperText={formData.unit_type !== 'piece' ? 'Can use decimals (e.g., 10.5)' : ''}
               />
 
               <Input
-                label="Min Stock Alert"
+                label={`Min Stock Alert (${formData.unit})`}
                 type="number"
                 name="min_stock"
                 value={formData.min_stock}
                 onChange={handleChange}
-                placeholder="5"
+                placeholder={formData.unit_type === 'piece' ? '5' : '5.00'}
+                step={formData.unit_type === 'piece' ? '1' : '0.01'}
                 min="0"
                 required
               />
             </div>
 
             {/* Stock Alert Preview */}
-            {formData.stock && formData.min_stock && parseInt(formData.stock) <= parseInt(formData.min_stock) && (
+            {formData.stock && formData.min_stock && parseFloat(formData.stock) <= parseFloat(formData.min_stock) && (
               <div className={`${alertColors.warning.bg} border ${alertColors.warning.border} rounded-xl p-4`}>
                 <div className="flex items-start gap-3">
                   <AlertTriangle size={20} className={alertColors.warning.text} />
                   <div>
                     <p className={`font-medium ${alertColors.warning.text}`}>Low Stock Warning</p>
                     <p className={`text-sm ${tokens.text.muted} mt-1`}>
-                      Current stock ({formData.stock}) is at or below the minimum level ({formData.min_stock}).
+                      Current stock ({formData.stock} {formData.unit}) is at or below the minimum level ({formData.min_stock} {formData.unit}).
                     </p>
                   </div>
                 </div>

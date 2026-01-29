@@ -188,9 +188,14 @@ const POS = () => {
                       {product.name}
                     </h3>
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold" style={{ color: colorScheme.primary[600] }}>
-                        {settings.currency_symbol}{product.price.toFixed(2)}
-                      </span>
+                      <div>
+                        <span className="text-lg font-bold" style={{ color: colorScheme.primary[600] }}>
+                          {settings.currency_symbol}{product.price.toFixed(2)}
+                        </span>
+                        <span className={`text-xs ${tokens.text.muted} ml-0.5`}>
+                          /{product.unit || 'pcs'}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className={`text-xs font-medium px-2 py-1 rounded-lg ${
@@ -198,7 +203,7 @@ const POS = () => {
                           ? statusColors.lowStock
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        Stock: {product.stock}
+                        {product.stock} {product.unit || 'pcs'}
                       </span>
                       <div className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
                         + Add
@@ -246,7 +251,7 @@ const POS = () => {
                           ? statusColors.lowStock
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        Stock: {product.stock}
+                        {product.stock} {product.unit || 'pcs'}
                       </span>
                     </div>
 
@@ -254,6 +259,9 @@ const POS = () => {
                     <div className="text-right">
                       <span className="text-xl font-bold" style={{ color: colorScheme.primary[600] }}>
                         {settings.currency_symbol}{product.price.toFixed(2)}
+                      </span>
+                      <span className={`text-sm ${tokens.text.muted} ml-0.5`}>
+                        /{product.unit || 'pcs'}
                       </span>
                     </div>
 

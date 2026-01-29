@@ -66,6 +66,17 @@ class ApiService {
     return this.request('/api/auth/me');
   }
 
+  async checkSetupStatus() {
+    return this.request('/api/auth/setup-status');
+  }
+
+  async setupAdmin(userData) {
+    return this.request('/api/auth/setup', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
   // Products endpoints
   async getProducts() {
     return this.request('/api/products');

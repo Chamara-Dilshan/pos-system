@@ -22,27 +22,41 @@ export const CartProvider = ({ children }) => {
 
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
+      const unit = product.unit || 'pcs';
+      const unitType = product.unit_type || 'piece';
 
       if (existingItem) {
-        // Check if adding one more would exceed stock
-        if (existingItem.quantity + 1 > product.stock) {
-          setStockError({
-            productId: product.id,
-            productName: product.name,
-            availableStock: product.stock,
-            message: `Only ${product.stock} items available for "${product.name}"`,
-          });
-          return prevItems; // Don't update
+        // For piece items, increment by 1 (current behavior)
+        if (unitType === 'piece') {
+          const newQuantity = existingItem.quantity + 1;
+          if (newQuantity > product.stock) {
+            setStockError({
+              productId: product.id,
+              productName: product.name,
+              availableStock: product.stock,
+              message: `Only ${product.stock} ${unit} available for "${product.name}"`,
+            });
+            return prevItems;
+          }
+          return prevItems.map((item) =>
+            item.id === product.id
+              ? { ...item, quantity: newQuantity }
+              : item
+          );
         }
-        return prevItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+
+        // For weight/volume items, show message that item is already in cart
+        setStockError({
+          productId: product.id,
+          productName: product.name,
+          availableStock: product.stock,
+          message: `"${product.name}" is already in cart. Update quantity in the cart.`,
+        });
+        return prevItems;
       }
 
       // New item - check if stock is available
-      if (product.stock < 1) {
+      if (product.stock <= 0) {
         setStockError({
           productId: product.id,
           productName: product.name,
@@ -52,7 +66,9 @@ export const CartProvider = ({ children }) => {
         return prevItems;
       }
 
-      return [...prevItems, { ...product, quantity: 1 }];
+      // Add new item with initial quantity: 1 for pieces, 0 for weight/volume (user will enter manually)
+      const initialQuantity = unitType === 'piece' ? 1 : 0;
+      return [...prevItems, { ...product, quantity: initialQuantity }];
     });
   };
 
@@ -63,7 +79,16 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = (productId, quantity) => {
     setStockError(null);
 
-    if (quantity <= 0) {
+    // Parse as float and round to 2 decimal places for precision
+    const qty = Math.round(parseFloat(quantity) * 100) / 100;
+
+    // Handle invalid input
+    if (isNaN(qty) || qty < 0) {
+      return;
+    }
+
+    // Remove item if quantity is 0
+    if (qty === 0) {
       removeItem(productId);
       return;
     }
@@ -71,18 +96,19 @@ export const CartProvider = ({ children }) => {
     setItems((prevItems) => {
       const item = prevItems.find((i) => i.id === productId);
 
-      if (item && quantity > item.stock) {
+      if (item && qty > item.stock) {
+        const unit = item.unit || 'pcs';
         setStockError({
           productId: item.id,
           productName: item.name,
           availableStock: item.stock,
-          message: `Only ${item.stock} items available for "${item.name}"`,
+          message: `Only ${item.stock} ${unit} available for "${item.name}"`,
         });
-        return prevItems; // Don't update
+        return prevItems;
       }
 
       return prevItems.map((i) =>
-        i.id === productId ? { ...i, quantity } : i
+        i.id === productId ? { ...i, quantity: qty } : i
       );
     });
   };

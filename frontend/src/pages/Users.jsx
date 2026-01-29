@@ -22,8 +22,10 @@ import { StatsCard } from '../components/common/Card';
 import { RoleBadge, StatusBadge } from '../components/common/Badge';
 import EmptyState from '../components/common/EmptyState';
 import { tokens, cardColors, alertColors, tableColors, colorScheme } from '../config/colors';
+import { useAuth } from '../context/AuthContext';
 
 const Users = () => {
+  const { userData } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -265,6 +267,8 @@ const Users = () => {
                           variant="primary"
                           size="sm"
                           icon={Edit}
+                          disabled={userData?.id === user.id}
+                          title={userData?.id === user.id ? "You cannot edit your own account" : ""}
                         >
                           Edit
                         </Button>
@@ -273,6 +277,8 @@ const Users = () => {
                           variant={user.is_active ? 'danger' : 'success'}
                           size="sm"
                           icon={user.is_active ? UserX : UserCheck}
+                          disabled={userData?.id === user.id}
+                          title={userData?.id === user.id ? "You cannot deactivate your own account" : ""}
                         >
                           {user.is_active ? 'Deactivate' : 'Activate'}
                         </Button>

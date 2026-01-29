@@ -125,27 +125,34 @@ orders.post('/', authMiddleware, async (c) => {
 
     // Insert order items and update stock
     for (const item of items) {
+      // Validate and parse quantity as float to support decimal values
+      const quantity = parseFloat(item.quantity);
+      if (isNaN(quantity) || quantity <= 0) {
+        return c.json({ error: `Invalid quantity for item ${item.product_name}` }, 400);
+      }
+
       // Insert order item
       await db.prepare(`
         INSERT INTO order_items (
           order_id, product_id, product_name,
-          quantity, unit_price, total_price
-        ) VALUES (?, ?, ?, ?, ?, ?)
+          quantity, unit, unit_price, total_price
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `).bind(
         order.id,
         item.product_id,
         item.product_name,
-        item.quantity,
+        quantity,
+        item.unit || 'pcs',
         item.unit_price,
         item.total_price
       ).run();
 
-      // Update product stock
+      // Update product stock (handles decimal values)
       await db.prepare(`
         UPDATE products
         SET stock = stock - ?
         WHERE id = ?
-      `).bind(item.quantity, item.product_id).run();
+      `).bind(quantity, item.product_id).run();
     }
 
     return c.json({
@@ -194,11 +201,13 @@ orders.put('/:id/refund', authMiddleware, adminMiddleware, async (c) => {
     ).bind(id).all();
 
     for (const item of items.results || []) {
+      // Parse quantity as float to support decimal values
+      const quantity = parseFloat(item.quantity);
       await db.prepare(`
         UPDATE products
         SET stock = stock + ?
         WHERE id = ?
-      `).bind(item.quantity, item.product_id).run();
+      `).bind(quantity, item.product_id).run();
     }
 
     return c.json({

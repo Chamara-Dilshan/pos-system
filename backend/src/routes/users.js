@@ -52,7 +52,13 @@ users.get('/:id', async (c) => {
 users.put('/:id', async (c) => {
   const db = c.env.DB;
   const userId = c.req.param('id');
+  const currentUserId = c.get('userId');
   const { name, email, role, is_active } = await c.req.json();
+
+  // Prevent self-editing
+  if (parseInt(userId) === currentUserId) {
+    return c.json({ error: 'Cannot edit your own account' }, 400);
+  }
 
   // Validation
   if (!name || !email || !role) {
@@ -153,8 +159,14 @@ users.delete('/:id', async (c) => {
 users.post('/:id/reactivate', async (c) => {
   const db = c.env.DB;
   const userId = c.req.param('id');
+  const currentUserId = c.get('userId');
 
   try {
+    // Prevent self-reactivation (shouldn't happen, but for consistency)
+    if (parseInt(userId) === currentUserId) {
+      return c.json({ error: 'Cannot modify your own account status' }, 400);
+    }
+
     // Check if user exists
     const existingUser = await db
       .prepare('SELECT id FROM users WHERE id = ?')

@@ -215,7 +215,7 @@ const OrderDetails = () => {
                           {item.product_name}
                         </h3>
                         <p className={`text-sm ${tokens.text.muted}`}>
-                          {item.quantity} × {settings.currency_symbol}{item.unit_price.toFixed(2)}
+                          {item.quantity} {item.unit || 'pcs'} × {settings.currency_symbol}{item.unit_price.toFixed(2)}/{item.unit || 'pcs'}
                         </p>
                       </div>
                     </div>
