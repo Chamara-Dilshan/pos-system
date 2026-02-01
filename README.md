@@ -1,4 +1,4 @@
-# CloudPOS - Serverless Point of Sale System
+# CloudPOS - Serverless Point of Sale System - chama
 
 A modern, serverless POS system built with React, Cloudflare Workers, and D1 database. Designed for small businesses including retail stores, cafes, and service providers.
 
