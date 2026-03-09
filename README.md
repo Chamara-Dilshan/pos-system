@@ -189,22 +189,26 @@ The `wrangler.toml` file contains:
 
 ```bash
 cd backend
-npm run deploy
+$env:CLOUDFLARE_API_TOKEN="your_token"; npx wrangler deploy
 ```
 
-Your API will be deployed to: `https://cloudpos-api.your-subdomain.workers.dev`
+**Production API:** `https://cloudpos-api.cloudpos-app.workers.dev`
 
 ### Deploy Frontend
 
 ```bash
 cd frontend
 npm run build
-
-# Deploy to Cloudflare Pages
-npx wrangler pages deploy dist --project-name=cloudpos
+$env:CLOUDFLARE_API_TOKEN="your_token"; npx wrangler pages deploy dist --project-name=cloudpos
 ```
 
-Your app will be deployed to: `https://cloudpos.pages.dev`
+**Production App:** `https://3d055ce7.cloudpos-cuj.pages.dev`
+
+### Post-Deployment: Add Firebase Authorized Domain
+
+After deploying, add your Pages URL to Firebase:
+1. Firebase Console → **Authentication** → **Settings** → **Authorized domains**
+2. Add: `3d055ce7.cloudpos-cuj.pages.dev`
 
 ## API Documentation
 
@@ -301,6 +305,15 @@ ISC
 For questions and issues, please open a GitHub issue.
 
 ## Recent Updates
+
+### March 10, 2026
+
+**Production Deployment**
+- Backend deployed to Cloudflare Workers: `https://cloudpos-api.cloudpos-app.workers.dev`
+- Frontend deployed to Cloudflare Pages: `https://3d055ce7.cloudpos-cuj.pages.dev`
+- D1 database initialized on Cloudflare (database ID: `d94f03ad-0dbd-40f0-ad81-cf886e7f2e0c`)
+- Cloudflare account subdomain: `cloudpos-app.workers.dev`
+- R2 storage disabled (can be re-enabled after activating R2 in Cloudflare Dashboard)
 
 ### January 30, 2026
 

@@ -15,6 +15,7 @@ database_id = "d94f03ad-0dbd-40f0-ad81-cf886e7f2e0c"
 ENVIRONMENT = "development"
 
 # R2 Storage binding (for product images)
-[[r2_buckets]]
-binding = "STORAGE"
-bucket_name = "cloudpos-images"
+# Uncomment after enabling R2 in Cloudflare Dashboard
+# [[r2_buckets]]
+# binding = "STORAGE"
+# bucket_name = "cloudpos-images"
